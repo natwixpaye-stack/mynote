@@ -67,7 +67,7 @@ function storeCookies(jar, targetUrl, setCookieHeaders) {
 }
 
 // Injected script for MyNote extraction
-function getInjectScript(baseUrl, autoReturn) {
+function getInjectScript(baseUrl, autoReturn, pronoteUrl) {
   const autoReturnScript = autoReturn ? `
   // AUTO-RETURN MODE: Si on est sur Pronote eleve.html, on revient auto vers MyNote avec session
   function checkAutoReturn(){
@@ -118,6 +118,7 @@ function getInjectScript(baseUrl, autoReturn) {
 <script>
 (function(){
   const BASE_URL = '${baseUrl.replace(/'/g,"\\'")}';
+  const PRONOTE_URL = '${(pronoteUrl||'').replace(/'/g,"\\'")}';
   const AUTO_RETURN = ${autoReturn ? 'true' : 'false'};
   
   // Keep navigation inside proxy
@@ -203,13 +204,13 @@ function getInjectScript(baseUrl, autoReturn) {
 `;
 }
 
-function rewriteHtml(html, baseUrl, autoReturn) {
+function rewriteHtml(html, baseUrl, autoReturn, pronoteUrl) {
   try {
     const $ = cheerio.load(html, { decodeEntities: false });
     $('meta[http-equiv="Content-Security-Policy"]').remove();
     $('meta[http-equiv="X-Frame-Options"]').remove();
     $('meta[http-equiv="content-security-policy"]').remove();
-    $('head').append(getInjectScript(baseUrl, autoReturn));
+    $('head').append(getInjectScript(baseUrl, autoReturn, pronoteUrl));
 
     const attrs = [
       { sel: 'a[href]', attr: 'href' },
@@ -257,6 +258,7 @@ function rewriteHtml(html, baseUrl, autoReturn) {
 app.all('/browse', async (req, res) => {
   const targetUrl = req.query.url || req.body?.url;
   const autoReturn = req.query.autoReturn === '1' || req.body?.autoReturn === '1';
+  const pronoteUrl = req.query.pronoteUrl || req.body?.pronoteUrl || '';
   if (!targetUrl) return res.status(400).send('URL manquante');
   let parsedTarget;
   try { parsedTarget = new URL(targetUrl); } catch { return res.status(400).send('URL invalide'); }
@@ -308,7 +310,7 @@ app.all('/browse', async (req, res) => {
     const contentType = upstreamRes.headers.get('content-type') || '';
     if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
       let html = await upstreamRes.text();
-      html = rewriteHtml(html, targetUrl, autoReturn);
+      html = rewriteHtml(html, targetUrl, autoReturn, pronoteUrl);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('X-Frame-Options', 'ALLOWALL');
       res.setHeader('Content-Security-Policy', "frame-ancestors *");
@@ -432,9 +434,9 @@ app.get('/auth/start', (req, res) => {
     sid: req.cookies.mynote_sid
   });
 
-  // NOUVEAU: Retour automatique via proxy avec autoReturn=1
+  // NOUVEAU: Retour automatique via proxy avec autoReturn=1 + pronoteUrl pour bouton direct
   const toutaticeLogin = `https://www.toutatice.fr/cas/login?service=${encodeURIComponent(pronoteUrl)}`;
-  const proxiedWithAutoReturn = `/browse?url=${encodeURIComponent(toutaticeLogin)}&autoReturn=1&state=${state}`;
+  const proxiedWithAutoReturn = `/browse?url=${encodeURIComponent(toutaticeLogin)}&autoReturn=1&pronoteUrl=${encodeURIComponent(pronoteUrl)}&state=${state}`;
   
   res.send(`
     <!DOCTYPE html>
