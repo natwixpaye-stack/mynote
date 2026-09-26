@@ -2,614 +2,285 @@
 <html lang="fr" class="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyNote — Ton école, enfin claire.</title>
-<meta name="theme-color" content="#0B1224">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      fontFamily: { sans: ['Inter','-apple-system','sans-serif'], mono: ['JetBrains Mono','monospace'] },
-      colors: {
-        bg: '#0B1224', card: '#151E35', cardHover: '#1C2847', border: '#233154',
-        accent: '#6C7CFF', accent2: '#8B9AFF', success: '#2ECC71', warning: '#FFB020', danger: '#FF5A5F',
-      }
-    }
-  }
-}
-</script>
-<style>
-*{-webkit-tap-highlight-color:transparent}body{background:#0B1224;font-family:Inter,sans-serif;overscroll-behavior:none}
-.card{background:linear-gradient(180deg,#1A2442 0%,#151E35 100%);border:1px solid #233154}
-.shadow-glow{box-shadow:0 0 0 1px rgba(108,124,255,0.1),0 8px 32px rgba(0,0,0,0.4)}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.timeline-line{position:absolute;left:11px;top:24px;bottom:-12px;width:2px;background:#233154}
-.timeline-line.last{display:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}.pulse{animation:pulse 2s infinite}
-</style>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{bg:'#0B1224',card:'#151E35',border:'#233154',accent:'#6C7CFF',accent2:'#8B9AFF'}}}}</script>
+<style>body{background:#0B1224;font-family:Inter,sans-serif}.card{background:linear-gradient(180deg,#1A2442 0%,#151E35 100%);border:1px solid #233154}</style>
 </head>
-<body class="bg-bg text-white antialiased min-h-screen overflow-x-hidden">
+<body class="bg-bg text-white min-h-screen">
 
-<!-- LOGIN SCREEN - NOUVEAU FLUX LIEN EDUCONNECT -> MYNOTE -->
-<div id="loginScreen" class="min-h-screen flex flex-col">
-  <div class="flex-1 flex flex-col lg:flex-row">
-    <div class="lg:w-[48%] p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-accent/20 via-transparent to-transparent pointer-events-none"></div>
-      <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px]"></div>
-      <div>
-        <div class="flex items-center gap-3 mb-16">
-          <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold text-lg">M</div>
-          <span class="font-bold text-xl tracking-tight">MyNote</span>
-          <span class="ml-2 px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-bold tracking-widest">BETA • LIEN OFFICIEL</span>
-        </div>
-        <h1 class="text-[40px] lg:text-[56px] font-[800] leading-[0.95] tracking-[-0.03em] mb-6">Ton école,<br><span class="text-accent2">enfin claire.</span></h1>
-        <p class="text-[18px] leading-[1.5] text-white/60 max-w-[420px]">MyNote reste ouvert, Toutatice s'ouvre à côté. Dès que tu es connecté, MyNote s'actualise tout seul avec tes vraies données.</p>
-        
-        <div class="mt-10 grid grid-cols-1 gap-3 max-w-[420px]">
-          <div class="flex gap-3 p-3 rounded-2xl bg-card border border-border">
-            <div class="w-9 h-9 rounded-xl bg-success/20 flex items-center justify-center text-success">↗</div>
-            <div><div class="font-semibold text-[14px]">Flux par lien (pas d'iframe)</div><div class="text-[13px] text-white/50">Tu cliques, tu vas sur EduConnect, tu reviens sur MyNote avec tes vraies données. Pas de navigateur intégré.</div></div>
-          </div>
-          <div class="flex gap-3 p-3 rounded-2xl bg-card border border-border">
-            <div class="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center">🔒</div>
-            <div><div class="font-semibold text-[14px]">100% officiel</div><div class="text-[13px] text-white/50">Utilise le parcours Toutatice/EduConnect de ton lycée. Aucun mot de passe stocké.</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="hidden lg:block text-[12px] text-white/30">Première Générale • Math • Physique-Chimie • SES • Vitré</div>
+<div id="loginScreen" class="min-h-screen flex flex-col lg:flex-row">
+  <div class="lg:w-[45%] p-8 lg:p-12 flex flex-col">
+    <div class="flex items-center gap-3 mb-12"><div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold">M</div><span class="font-bold text-xl">MyNote</span><span class="ml-2 px-2 py-1 rounded-full bg-white/10 text-[10px]">BETA DEBUG</span></div>
+    <h1 class="text-[48px] font-[800] leading-[0.9] mb-6">Ton école,<br><span class="text-accent2">enfin claire.</span></h1>
+    <p class="text-white/60 text-[16px] max-w-[400px]">Connexion directe Pronote via Pawnote. Si ton lycée utilise ENT Toutatice, utilise le QR Code (méthode officielle qui contourne EduConnect).</p>
+    <div class="mt-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[13px]">
+      <b class="text-amber-300">⚠️ Si tu as "page n'existe pas" :</b><br>
+      1. Ton lien pronote:// ne s'ouvre pas dans le navigateur (normal). Il faut le <b>coller</b> dans MyNote.<br>
+      2. Le QR expire après 10 min ! Génère un nouveau QR à chaque tentative.<br>
+      3. Ton Pronote peut bloquer Render (IP datacenter). Dans ce cas utilise login direct avec identifiants Pronote fournis par le collège.
     </div>
+    <div class="mt-auto pt-8 flex gap-2">
+      <button onclick="fetch('/api/debug/last').then(r=>r.json()).then(j=>alert(JSON.stringify(j,null,2)))" class="text-[12px] px-3 py-2 rounded-lg bg-white/10">🐛 Voir dernier log serveur</button>
+      <button onclick="localStorage.clear();location.reload()" class="text-[12px] px-3 py-2 rounded-lg bg-white/10">Reset</button>
+    </div>
+  </div>
 
-    <div class="lg:w-[52%] p-6 lg:p-10 flex items-center justify-center bg-[#0E162C]">
-      <div class="w-full max-w-[480px]">
-        <div class="card rounded-[28px] shadow-glow p-7 lg:p-8">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-[22px] font-bold">Se connecter à Pronote</h2>
-            <span class="px-3 py-1 rounded-full bg-accent/20 text-accent2 text-[11px] font-bold">LIEN EDUCONNECT</span>
-          </div>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="text-[12px] font-semibold text-white/60 uppercase mb-2 block">URL Pronote de ton établissement</label>
-              <input id="pronoteUrl" placeholder="https://035xxxx.index-education.net/pronote/" value="https://0350774L.index-education.net/pronote/" class="w-full h-[48px] px-4 rounded-xl bg-[#0B1224] border border-border focus:border-accent outline-none text-[15px]">
-              <p class="mt-2 text-[12px] text-white/40">Trouvable dans Toutatice > Vie scolaire > Pronote</p>
-            </div>
+  <div class="lg:w-[55%] p-6 lg:p-8 flex items-center justify-center bg-[#0E162C]">
+    <div class="w-full max-w-[520px]">
+      <div class="card rounded-[24px] p-6 lg:p-7">
+        <h2 class="text-[22px] font-bold mb-1">Connexion Pronote</h2>
+        <p class="text-[13px] text-white/50 mb-5">3 méthodes • Données réelles uniquement</p>
 
-            <!-- NOUVEAU FLUX LIEN -->
-            <div class="rounded-xl bg-accent/10 border border-accent/20 p-4">
-              <div class="font-bold text-[14px] mb-2">🔗 Connexion nouvel onglet + auto-refresh</div>
-              <div class="text-[13px] text-white/60 leading-[1.5]">
-                <b class="text-white">Parcours voulu :</b><br>
-                MyNote → Toutatice → EduConnect → retour MyNote<br><br>
-                <b class="text-amber-300">⚠️ Limite technique réelle :</b> Toutatice (CAS) n'autorise que 2 services : son portail et Pronote. Il refuse `mynote.k8am.onrender.com` comme `service`. C'est bloqué côté académie, pas par MyNote.<br><br>
-                <b class="text-white">Meilleure architecture réelle sans iframe :</b><br>
-                1. MyNote t'envoie vers Toutatice (lien)<br>
-                2. Toutatice t'envoie vers EduConnect (lien)<br>
-                3. Tu te connectes<br>
-                4. Retour Toutatice → Pronote<br>
-                5. <b>Bookmarklet "Retour MyNote"</b> : 1 clic dans Pronote → tu reviens sur MyNote avec ta session
-              </div>
-            </div>
-
-            <button id="btnLinkEduconnect" class="w-full h-[52px] rounded-xl bg-accent hover:bg-accent2 text-white font-semibold text-[15px] flex items-center justify-center gap-2">
-              <span>🔗</span> Se connecter via EduConnect (lien)
-            </button>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button id="btnBookmarklet" class="h-[48px] rounded-xl bg-white/10 border border-border text-[13px] font-medium">📌 Bookmarklet retour</button>
-              <button id="btnQR" class="h-[48px] rounded-xl bg-white/10 border border-border text-[13px] font-medium">📱 Méthode QR Code</button>
-            </div>
-
-            <div id="bookmarkletArea" class="hidden rounded-xl bg-[#0B1224] border border-border p-4">
-              <div class="font-semibold text-[13px] mb-2">📌 Glisse ce bouton dans ta barre de favoris :</div>
-              <a id="bookmarkletLink" href="" class="inline-block px-4 py-2 rounded-xl bg-accent text-white text-[13px] font-bold">↩️ Retour vers MyNote</a>
-              <p class="text-[11px] text-white/40 mt-2">Une fois dans Pronote, clique sur ce favori. Il t'enverra vers <code class="text-white/60">mynote-k8am.onrender.com/auth/callback</code> avec ta session.</p>
-            </div>
-
-            <div id="qrArea" class="hidden rounded-xl bg-[#0B1224] border border-border p-4">
-              <div class="font-semibold text-[14px] mb-3 flex items-center gap-2">📱 Méthode QR Code - Guide</div>
-              
-              <div class="bg-[#151E35] rounded-xl p-3 mb-3">
-                <div class="font-bold text-[12px] text-accent2 mb-2">ÉTAPE 1 - Dans Pronote (nouvel onglet) :</div>
-                <ol class="text-[12px] text-white/70 list-decimal list-inside space-y-1.5">
-                  <li>Clique en haut à droite sur ton prénom → <b>Informations personnelles</b></li>
-                  <li>Onglet <b>Compte</b> → section <b>Appli mobile</b> ou <b>QR Code</b></li>
-                  <li>Clique <b>Générer un QR Code</b> ou <b>Activer</b></li>
-                  <li>Un QR Code s'affiche avec un <b>code PIN à 4 chiffres</b> en dessous (ex: 1234) → note-le !</li>
-                </ol>
-              </div>
-
-              <div class="bg-[#151E35] rounded-xl p-3 mb-3">
-                <div class="font-bold text-[12px] text-accent2 mb-2">ÉTAPE 2 - Copier le QR Code (3 méthodes) :</div>
-                <div class="space-y-2 text-[11px] text-white/60">
-                  <div><b class="text-white">Méthode A - Scan avec téléphone (le plus simple) :</b><br>
-                  Ouvre l'appareil photo de ton téléphone, scanne le QR Code sur ton PC → tu verras un lien <code>pronote://...</code> → copie ce lien et colle-le ci-dessous</div>
-                  <div><b class="text-white">Méthode B - Clic droit sur QR :</b><br>
-                  Clic droit sur le QR Code dans Pronote → "Copier l'adresse de l'image" ou "Inspecter" → cherche <code>pronote://</code> dans le code</div>
-                  <div><b class="text-white">Méthode C - Scanner caméra MyNote :</b><br>
-                  Clique sur "Scanner avec caméra" ci-dessous et vise le QR Code affiché dans Pronote</div>
-                </div>
-              </div>
-
-              <div class="flex gap-2 mb-3">
-                <button id="btnScanQR" class="flex-1 h-10 rounded-xl bg-accent text-white text-[12px] font-medium">📷 Scanner avec caméra</button>
-                <button id="btnPasteQR" class="flex-1 h-10 rounded-xl bg-white/10 border border-border text-[12px]">📋 Coller depuis presse-papier</button>
-              </div>
-
-              <div id="qrScanner" class="hidden mb-3 rounded-xl overflow-hidden bg-black">
-                <div id="qrReader" class="w-full h-[200px] bg-black flex items-center justify-center text-[12px] text-white/50">Caméra...</div>
-                <button onclick="document.getElementById('qrScanner').classList.add('hidden')" class="w-full h-8 bg-white/10 text-[11px]">Fermer scanner</button>
-              </div>
-
-              <textarea id="qrInput" placeholder="Colle ici le lien pronote://... ou le JSON du QR Code&#10;Exemple: pronote://?url=https://0350774L.index-education.net/pronote/&login=N.NOAH&jeton=ABC123..." class="w-full h-[100px] p-3 rounded-xl bg-[#151E35] border border-border text-[11px] font-mono placeholder:text-white/20"></textarea>
-              
-              <div class="mt-2 text-[11px] text-white/40">Le QR contient ton identifiant + un jeton chiffré. Il reste en local, jamais envoyé à un tiers sauf ton backend Render.</div>
-              
-              <button id="btnConnectQR" class="mt-3 w-full h-11 rounded-xl bg-white text-black font-semibold text-[13px]">✅ Se connecter avec ce QR Code</button>
-              
-              <div class="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200">
-                💡 Si tu n'arrives pas à copier le QR, tu peux aussi utiliser ton mot de passe Pronote direct : dans Pronote > Infos perso > Compte > tu as un identifiant et un mot de passe appli mobile. Utilise-les avec ton URL Pronote via l'API.
-              </div>
-            </div>
-
-            <div class="pt-2 flex gap-3">
-              <button id="btnDemo" class="flex-1 h-[44px] rounded-xl bg-white/10 border border-border text-[14px]">Voir l'interface exacte (démo)</button>
-            </div>
-
-            <div class="rounded-xl bg-[#0B1224] border border-border p-3 text-[11px] text-white/50">
-              <b class="text-white">Transparence :</b> Le flux MyNote → EduConnect → MyNote direct est impossible car Toutatice n'autorise pas MyNote comme service. Le bookmarklet est la meilleure alternative sans iframe et sans contournement. Voir analyse technique.
-            </div>
-          </div>
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-5 p-1 rounded-xl bg-[#0B1224] border border-border">
+          <button id="tabQr" class="flex-1 h-[36px] rounded-lg bg-accent text-white font-semibold text-[13px]">📱 QR Code</button>
+          <button id="tabDirect" class="flex-1 h-[36px] rounded-lg text-white/60 text-[13px]">🔑 Direct</button>
+          <button id="tabEdu" class="flex-1 h-[36px] rounded-lg text-white/60 text-[13px]">🔗 EduConnect</button>
         </div>
+
+        <!-- Pronote URL -->
+        <div class="mb-4">
+          <label class="text-[11px] font-bold text-white/50 uppercase mb-2 block">URL Pronote (obligatoire)</label>
+          <div class="flex gap-2">
+            <input id="pronoteUrl" placeholder="https://035xxxx.index-education.net/pronote/" value="https://0350774L.index-education.net/pronote/" class="flex-1 h-[44px] px-3 rounded-xl bg-[#0B1224] border border-border text-[14px]">
+            <button id="btnTestUrl" class="h-[44px] px-4 rounded-xl bg-white/10 text-[13px]">Tester</button>
+          </div>
+          <div id="urlTestResult" class="mt-2 text-[12px] hidden"></div>
+        </div>
+
+        <!-- QR Tab -->
+        <div id="panelQr" class="space-y-4">
+          <div class="rounded-xl bg-accent/10 border border-accent/20 p-4 text-[13px] leading-[1.5]">
+            <b>Comment récupérer le QR Code (2 min) :</b><br>
+            1. Ouvre <a href="https://www.toutatice.fr" target="_blank" class="underline text-accent2">toutatice.fr</a> dans un nouvel onglet → Connecte-toi via EduConnect → Va dans Pronote<br>
+            2. Dans Pronote: Clique ton prénom en haut à droite → <b>Informations personnelles → Compte → QR Code</b><br>
+            3. Clique <b>"Générer QR Code"</b> → tu vois un gros QR + <b>4 chiffres PIN</b> en dessous → NOTE LE PIN !<br>
+            4. Sur PC: Clic droit sur QR → Inspecter → cherche <code>pronote://...</code> → copie TOUT<br>
+            OU avec téléphone: Scanne le QR avec appareil photo → copie le lien <code>pronote://?url=...&login=...&jeton=...</code>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-bold text-white/50 uppercase mb-2 block">Lien QR Code (pronote://...)</label>
+            <textarea id="qrData" placeholder="pronote://?url=https://0350774L.index-education.net/pronote/&login=xxxx&jeton=xxxx" class="w-full h-[90px] p-3 rounded-xl bg-[#0B1224] border border-border text-[12px] font-mono"></textarea>
+            <div class="flex gap-2 mt-2">
+              <button id="btnScanQR" class="h-[36px] px-3 rounded-lg bg-white/10 text-[12px]">📷 Scanner caméra</button>
+              <button id="btnPasteQR" class="h-[36px] px-3 rounded-lg bg-white/10 text-[12px]">📋 Coller presse-papier</button>
+            </div>
+            <div id="qrScanner" class="hidden mt-3 rounded-xl overflow-hidden bg-black">
+              <div id="qrReader" class="w-full"></div>
+              <button id="btnStopScan" class="w-full h-[36px] bg-danger text-white text-[12px]">Arrêter scanner</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-bold text-white/50 uppercase mb-2 block">PIN à 4 chiffres (affiché sous le QR)</label>
+            <input id="qrPin" placeholder="ex: 4827" maxlength="4" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-border text-[15px] tracking-widest">
+          </div>
+
+          <button id="btnConnectQR" class="w-full h-[48px] rounded-xl bg-accent hover:bg-accent2 font-semibold">✅ Se connecter avec ce QR Code</button>
+          <div id="qrStatus" class="text-[12px] p-3 rounded-xl hidden"></div>
+        </div>
+
+        <!-- Direct Tab -->
+        <div id="panelDirect" class="space-y-4 hidden">
+          <div class="rounded-xl bg-success/10 border border-success/20 p-3 text-[12px]">
+            <b>Login direct Pronote</b> : Utilise les identifiants Pronote que ton collège t'a donnés (pas EduConnect). Si tu n'en as pas, utilise QR Code.
+          </div>
+          <input id="directUser" placeholder="Identifiant Pronote (ex: n.dupont)" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-border text-[14px]">
+          <input id="directPass" type="password" placeholder="Mot de passe Pronote" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-border text-[14px]">
+          <button id="btnConnectDirect" class="w-full h-[48px] rounded-xl bg-success text-black font-semibold">🔑 Se connecter en direct</button>
+          <div id="directStatus" class="text-[12px] p-3 rounded-xl hidden"></div>
+        </div>
+
+        <!-- EduConnect Tab -->
+        <div id="panelEdu" class="space-y-4 hidden">
+          <div class="rounded-xl bg-white/5 border border-border p-4 text-[13px]">
+            Ouvre Toutatice dans un nouvel onglet, connecte-toi, va dans Pronote, puis génère un QR Code pour revenir ici.<br><br>
+            <b>Pourquoi pas de retour auto ?</b> Toutatice n'autorise que Pronote comme service CAS, pas MyNote. C'est bloqué par l'académie.
+          </div>
+          <button id="btnLinkEduconnect" class="w-full h-[48px] rounded-xl bg-accent font-semibold">🔗 Ouvrir Toutatice (nouvel onglet)</button>
+          <div id="eduStatus" class="text-[12px] p-3 rounded-xl hidden"></div>
+        </div>
+
+        <div id="globalStatus" class="mt-4 text-[12px] p-3 rounded-xl bg-white/5 border border-border hidden"></div>
       </div>
+
+      <div class="mt-4 text-[11px] text-white/30 text-center">MyNote utilise Pawnote (API Pronote officielle non-officielle). Aucun mot de passe stocké. Données réelles uniquement.</div>
     </div>
   </div>
 </div>
 
-<!-- MAIN APP - INTERFACE EXACTE DE LA MAQUETTE -->
-<div id="mainApp" class="hidden min-h-screen flex-col">
-  <header class="sticky top-0 z-30 backdrop-blur-xl bg-bg/80 border-b border-border">
-    <div class="max-w-[1440px] mx-auto px-4 lg:px-6 h-[64px] flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center font-bold">M</div>
-        <div class="hidden lg:block">
-          <div class="font-bold leading-none">MyNote</div>
-          <div class="text-[11px] text-white/40 flex items-center gap-1.5"><span class="dot bg-success"></span><span id="syncText">Synchronisé il y a 2 min • Via EduConnect</span></div>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <div id="demoBadge" class="hidden px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-bold">MODE DÉMO</div>
-        <div id="realBadge" class="hidden px-3 py-1.5 rounded-full bg-success/15 text-success text-[11px] font-bold">● DONNÉES RÉELLES • EDUCONNECT</div>
-        <button class="w-9 h-9 rounded-xl bg-card border border-border">🔔</button>
-        <button id="btnLogout" class="w-9 h-9 rounded-xl bg-card border border-border">⎋</button>
-      </div>
+<!-- APP SCREEN (simplifié) -->
+<div id="appScreen" class="hidden min-h-screen p-6">
+  <div class="max-w-[900px] mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span><span id="realBadge" class="ml-2 px-2 py-1 rounded-full bg-success/20 text-success text-[10px] font-bold hidden">DONNÉES RÉELLES</span></div>
+      <button onclick="localStorage.clear();location.reload()" class="px-4 py-2 rounded-xl bg-white/10 text-[13px]">Déconnexion</button>
     </div>
-  </header>
-
-  <div class="flex-1 max-w-[1440px] mx-auto w-full flex">
-    <aside class="hidden lg:block w-[260px] p-4 sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto">
-      <nav id="desktopNav" class="space-y-1"></nav>
-      <div class="mt-6 p-4 rounded-2xl card">
-        <div class="text-[11px] font-bold tracking-widest text-white/40 uppercase mb-3">Widgets iPhone</div>
-        <div class="space-y-2 text-[12px]">
-          <div class="p-2.5 rounded-xl bg-bg border border-border flex gap-2"><span>📚</span><div><div class="font-semibold">Prochain cours</div><div class="text-white/50">Mathématiques<br>09:00 • Salle B204</div></div></div>
-          <div class="p-2.5 rounded-xl bg-bg border border-border"><div class="font-semibold">Aujourd'hui</div><div class="text-white/50">3 cours • 1 devoir • Aucune absence</div></div>
-          <div class="p-2.5 rounded-xl bg-bg border border-border"><div class="font-semibold">Moyenne générale</div><div class="text-xl font-bold">15,2 <span class="text-[12px] font-normal text-white/50">/20</span></div></div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="flex-1 p-4 lg:p-6 pb-[88px] lg:pb-6">
-      <!-- ACCUEIL -->
-      <section id="page-accueil" class="page">
-        <div class="mb-6">
-          <h1 class="text-[28px] font-[800] tracking-tight">Salut Noah 👋</h1>
-          <p class="text-white/50 text-[14px] mt-1" id="currentDate">Lundi 14 avril 2025</p>
-        </div>
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div class="xl:col-span-2 space-y-4">
-            <div class="card rounded-[20px] p-5">
-              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">Prochain cours</h2><span class="px-2.5 py-1 rounded-full bg-accent/20 text-accent2 text-[11px] font-bold">Dans 37 min</span></div>
-              <div class="flex gap-4">
-                <div class="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-xl">∑</div>
-                <div class="flex-1">
-                  <div class="font-bold text-[16px]">Mathématiques</div>
-                  <div class="text-[13px] text-white/60">M. Dupont • Salle B204</div>
-                  <div class="text-[13px] text-white/40 mt-1">09:00 → 10:00</div>
-                </div>
-              </div>
-            </div>
-            <div class="card rounded-[20px] p-5">
-              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">Aujourd'hui</h2><button class="text-[12px] text-accent2">Voir tout</button></div>
-              <div id="todayTimeline" class="relative space-y-0"></div>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div class="card rounded-[20px] p-5">
-              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">À faire</h2><span class="text-[12px] text-white/40">3 devoirs</span></div>
-              <div id="todoList" class="space-y-2.5"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="card rounded-[20px] p-4">
-                <div class="text-[11px] text-white/40 uppercase font-bold">Moyenne générale</div>
-                <div class="text-[28px] font-[800] mt-1">15,2<span class="text-[14px] font-medium text-white/40">/20</span></div>
-                <div class="text-[11px] text-success mt-1">↗ +0,3 ce mois</div>
-              </div>
-              <div class="card rounded-[20px] p-4">
-                <div class="text-[11px] text-white/40 uppercase font-bold">Notes récentes</div>
-                <div class="mt-3 space-y-2 text-[13px]">
-                  <div class="flex justify-between"><span>Maths</span><span class="font-bold text-success">16/20</span></div>
-                  <div class="flex justify-between"><span>Physique</span><span class="font-bold">14,5/20</span></div>
-                  <div class="flex justify-between"><span>SES</span><span class="font-bold text-success">17/20</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- EMPLOI DU TEMPS -->
-      <section id="page-edt" class="page hidden">
-        <div class="flex items-center justify-between mb-5"><h1 class="text-[24px] font-bold">Emploi du temps</h1><div class="flex gap-1 p-1 rounded-xl bg-card border border-border"><button class="px-3 py-1.5 rounded-lg bg-accent text-white text-[13px]">Aujourd'hui</button><button class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Demain</button><button class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Semaine</button></div></div>
-        <div id="edtList" class="space-y-3"></div>
-      </section>
-
-      <!-- NOTES -->
-      <section id="page-notes" class="page hidden">
-        <div class="flex items-center justify-between mb-5"><h1 class="text-[24px] font-bold">Notes</h1><div class="flex gap-1 p-1 rounded-xl bg-card border border-border"><button class="px-3 py-1.5 rounded-lg bg-accent text-white text-[13px]">Matières</button><button onclick="navigate('moyennes')" class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Moyennes</button></div></div>
-        <div id="notesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-      </section>
-
-      <!-- DEVOIRS -->
-      <section id="page-devoirs" class="page hidden">
-        <div class="flex items-center justify-between mb-5"><h1 class="text-[24px] font-bold">Devoirs</h1><button class="h-9 px-4 rounded-xl bg-accent text-white text-[13px]">+ Ajouter un devoir</button></div>
-        <div class="flex gap-2 mb-4 overflow-x-auto"><button class="px-3.5 py-2 rounded-full bg-accent text-white text-[13px]">Tout</button><button class="px-3.5 py-2 rounded-full bg-card border border-border text-[13px]">Aujourd'hui</button><button class="px-3.5 py-2 rounded-full bg-card border border-border text-[13px]">Demain</button><button class="px-3.5 py-2 rounded-full bg-card border border-border text-[13px]">Semaine</button></div>
-        <div id="homeworkList" class="space-y-3"></div>
-      </section>
-
-      <!-- CALENDRIER -->
-      <section id="page-calendrier" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Calendrier</h1>
-        <div class="card rounded-[20px] p-5">
-          <div class="flex items-center justify-between mb-4"><h3 class="font-bold">Avril 2025</h3></div>
-          <div class="grid grid-cols-7 gap-1 text-[11px] text-white/40 mb-2"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
-          <div class="grid grid-cols-7 gap-1"><div class="h-9 rounded-xl bg-accent text-white flex items-center justify-center font-bold">14</div><div class="h-9 rounded-xl bg-bg border border-border flex items-center justify-center">15</div><div class="h-9 rounded-xl bg-bg border border-border flex items-center justify-center">16</div><div class="h-9 rounded-xl flex items-center justify-center text-white/40">17</div><div class="h-9 rounded-xl flex items-center justify-center text-white/40">18</div><div class="h-9 rounded-xl flex items-center justify-center text-white/40">19</div><div class="h-9 rounded-xl flex items-center justify-center text-white/40">20</div></div>
-          <div class="mt-6"><div class="font-bold text-[14px] mb-3">Lundi 14 avril</div><div id="calendarDay" class="space-y-2"></div></div>
-        </div>
-      </section>
-
-      <!-- ABSENCES -->
-      <section id="page-absences" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Absences / Retards</h1>
-        <div id="absenceList" class="space-y-3"></div>
-      </section>
-
-      <!-- CAHIER -->
-      <section id="page-cahier" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Cahier de textes</h1>
-        <div id="cahierList" class="space-y-3"></div>
-      </section>
-
-      <!-- MOYENNES -->
-      <section id="page-moyennes" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Moyennes</h1>
-        <div class="card rounded-[20px] p-5 mb-4">
-          <div class="text-[13px] text-white/50">Moyenne générale</div>
-          <div class="text-[36px] font-[800]">15,2 <span class="text-[18px] text-white/40">/20</span></div>
-        </div>
-        <div class="card rounded-[20px] p-5"><div class="font-bold mb-4">Moyennes par matière</div><div id="averagesList" class="space-y-4"></div></div>
-      </section>
-
-      <!-- NOTIFICATIONS -->
-      <section id="page-notifications" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Notifications</h1>
-        <div class="card rounded-[20px] p-2 divide-y divide-border">
-          <div class="flex items-center justify-between p-4"><div><div class="font-medium text-[14px]">Prochain cours</div><div class="text-[12px] text-white/40">15 min avant</div></div><div class="w-11 h-6 bg-accent rounded-full relative"><div class="absolute top-[2px] right-[2px] w-5 h-5 bg-white rounded-full"></div></div></div>
-          <div class="flex items-center justify-between p-4"><div class="font-medium text-[14px]">Devoirs à échéance</div><div class="w-11 h-6 bg-accent rounded-full relative"><div class="absolute top-[2px] right-[2px] w-5 h-5 bg-white rounded-full"></div></div></div>
-          <div class="flex items-center justify-between p-4"><div class="font-medium text-[14px]">Nouvelle note</div><div class="w-11 h-6 bg-accent rounded-full relative"><div class="absolute top-[2px] right-[2px] w-5 h-5 bg-white rounded-full"></div></div></div>
-        </div>
-      </section>
-
-      <!-- PARAMETRES -->
-      <section id="page-parametres" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Paramètres</h1>
-        <div class="space-y-4">
-          <div class="card rounded-[20px] p-5"><div class="text-[11px] font-bold uppercase text-white/40 mb-3">Apparence</div><div class="space-y-3"><div class="flex justify-between"><span class="text-[14px]">Thème</span><span class="text-[13px] text-white/50">Sombre</span></div><div class="flex justify-between"><span class="text-[14px]">Couleur principale</span><div class="w-5 h-5 rounded-full bg-accent"></div></div></div></div>
-          <div class="card rounded-[20px] p-5"><div class="text-[11px] font-bold uppercase text-white/40 mb-3">Compte</div><div class="text-[13px]"><div>Connexion : <span class="text-success">Via EduConnect (lien officiel)</span></div><div class="mt-1">Flux : MyNote → Toutatice → EduConnect → <span class="text-success">Retour auto vers MyNote ✅</span></div></div></div>
-          <div class="card rounded-[20px] p-5 border-amber-500/20"><div class="font-bold text-[14px] mb-2">Pourquoi pas de retour direct ?</div><div class="text-[13px] text-white/60">Toutatice (CAS) n'autorise que Pronote comme service. MyNote contourne en passant par /browse?url=...&autoReturn=1 : le proxy détecte Pronote eleve.html et te ramène automatiquement sur MyNote avec ta session. Plus besoin de bookmarklet.</div></div>
-        </div>
-      </section>
-
-      <!-- PLUS -->
-      <section id="page-plus" class="page hidden">
-        <h1 class="text-[24px] font-bold mb-5">Plus</h1>
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="navigate('moyennes')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center mb-3">📊</div><div class="font-semibold text-[14px]">Moyennes</div><div class="text-[12px] text-white/40">Générale et par matière</div></button>
-          <button onclick="navigate('absences')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-danger/20 flex items-center justify-center mb-3">⚠️</div><div class="font-semibold text-[14px]">Absences</div><div class="text-[12px] text-white/40">Ton historique</div></button>
-          <button onclick="navigate('cahier')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center mb-3">📖</div><div class="font-semibold text-[14px]">Cahier de textes</div><div class="text-[12px] text-white/40">Contenu des cours</div></button>
-          <button onclick="navigate('calendrier')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center mb-3">📅</div><div class="font-semibold text-[14px]">Calendrier</div><div class="text-[12px] text-white/40">Cours & événements</div></button>
-          <button onclick="navigate('notifications')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">🔔</div><div class="font-semibold text-[14px]">Notifications</div><div class="text-[12px] text-white/40">Reste informé</div></button>
-          <button onclick="navigate('parametres')" class="card rounded-[20px] p-4 text-left"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">⚙️</div><div class="font-semibold text-[14px]">Paramètres</div><div class="text-[12px] text-white/40">Personnalise</div></button>
-        </div>
-      </section>
-    </main>
+    <div id="userInfo" class="card rounded-2xl p-5 mb-6"></div>
+    <div class="grid lg:grid-cols-3 gap-4">
+      <div class="card rounded-2xl p-5"><h3 class="font-bold mb-3">📅 Emploi du temps</h3><div id="timetableView" class="text-[13px] text-white/60">Chargement...</div></div>
+      <div class="card rounded-2xl p-5"><h3 class="font-bold mb-3">📊 Notes</h3><div id="gradesView" class="text-[13px] text-white/60">Chargement...</div></div>
+      <div class="card rounded-2xl p-5"><h3 class="font-bold mb-3">📚 Devoirs</h3><div id="homeworksView" class="text-[13px] text-white/60">Chargement...</div></div>
+    </div>
+    <pre id="rawData" class="mt-6 p-4 rounded-xl bg-black/50 text-[11px] overflow-auto max-h-[400px] hidden"></pre>
   </div>
-
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl bg-bg/90 border-t border-border">
-    <div class="flex justify-around items-center h-[72px] px-2">
-      <button data-nav="accueil" class="navBtn flex flex-col items-center gap-1"><span class="w-6 h-6 flex items-center justify-center rounded-lg bg-accent text-white">🏠</span><span class="text-[10px] text-white">Accueil</span></button>
-      <button data-nav="edt" class="navBtn flex flex-col items-center gap-1"><span class="w-6 h-6 text-white/50">📅</span><span class="text-[10px] text-white/50">EDT</span></button>
-      <button data-nav="notes" class="navBtn flex flex-col items-center gap-1"><span class="w-6 h-6 text-white/50">📝</span><span class="text-[10px] text-white/50">Notes</span></button>
-      <button data-nav="devoirs" class="navBtn flex flex-col items-center gap-1"><span class="w-6 h-6 text-white/50">📚</span><span class="text-[10px] text-white/50">Devoirs</span></button>
-      <button data-nav="plus" class="navBtn flex flex-col items-center gap-1"><span class="w-6 h-6 text-white/50">•••</span><span class="text-[10px] text-white/50">Plus</span></button>
-    </div>
-  </nav>
 </div>
 
 <script>
-// DATA
-const demoData = {
-  timetable: [
-    { subject:'Physique-Chimie', teacher:'M. Martin', room:'Salle B101', start:'08:00', end:'09:00', color:'bg-emerald-500', icon:'🧪', status:'done' },
-    { subject:'Mathématiques', teacher:'M. Dupont', room:'Salle B204', start:'09:00', end:'10:00', color:'bg-accent', icon:'∑', status:'current', special:true },
-    { subject:'SES', teacher:'Mme Leroy', room:'Salle A203', start:'10:00', end:'11:00', color:'bg-amber-500', icon:'📈' },
-    { subject:'Français', teacher:'M. Bernard', room:'Salle C102', start:'13:30', end:'15:00', color:'bg-pink-500', icon:'📖' },
-    { subject:'Histoire-Géographie', teacher:'Mme Petit', room:'Salle B205', start:'15:00', end:'17:00', color:'bg-orange-500', icon:'🌍' },
-  ],
-  homeworks: [
-    { subject:'Mathématiques', title:'Exercice 42', due:'Demain • Coef. 3', color:'bg-accent' },
-    { subject:'Physique-Chimie', title:'Compte rendu', due:'Lundi • Coef. 2', color:'bg-emerald-500' },
-    { subject:'Espagnol', title:'Apprendre vocabulaire', due:'Mardi • Coef. 1', color:'bg-amber-500' },
-    { subject:'Français', title:'Lecture chapitre 4', due:"Aujourd'hui", done:true, color:'bg-pink-500' },
-    { subject:'Histoire-Géographie', title:'Fiche de révision', due:"Aujourd'hui", done:true, color:'bg-orange-500' },
-  ],
-  grades: [
-    { subject:'Mathématiques', avg:'15,8', coeff:'7', color:'bg-accent' },
-    { subject:'Physique-Chimie', avg:'14,7', coeff:'6', color:'bg-emerald-500' },
-    { subject:'SES', avg:'16,1', coeff:'5', color:'bg-amber-500', special:true },
-    { subject:'Français', avg:'13,4', coeff:'4', color:'bg-pink-500' },
-    { subject:'Histoire-Géographie', avg:'15,2', coeff:'3', color:'bg-orange-500' },
-    { subject:'Espagnol', avg:'17,3', coeff:'3', color:'bg-violet-500' },
-  ],
-  absences: [
-    { date:'Vendredi 21 mars 2025', type:'Absence justifiée', reason:'(Maladie)' },
-    { date:'Mardi 4 mars 2025', type:'Absence non justifiée', reason:'(Non présenté)' },
-    { date:'Lundi 17 février 2025', type:'Retard', reason:'(8 min)' },
-  ],
-  cahier: [
-    { subject:'Mathématiques', teacher:'M. Dupont • Salle B204', content:'Exercices 41 et 42 à faire pour demain.' },
-    { subject:'Physique-Chimie', teacher:'M. Martin • Salle B101', content:'Chapitre 5 : Les réactions chimiques.' },
-    { subject:'Français', teacher:'M. Bernard • Salle C102', content:'Lecture du chapitre 4 et questions.' },
-  ]
-};
+const $ = id => document.getElementById(id);
+let html5Qr = null;
 
-let state = JSON.parse(localStorage.getItem('mynote_state')||'null') || {isDemo:true, pronoteUrl:'https://0350774L.index-education.net/pronote/', lastSync:Date.now()};
-
-function save(){localStorage.setItem('mynote_state', JSON.stringify(state));}
-
-function renderToday(){
-  document.getElementById('todayTimeline').innerHTML = demoData.timetable.map((t,i)=>`
-    <div class="relative flex gap-4 pb-6">
-      <div class="timeline-line ${i===demoData.timetable.length-1?'last':''}"></div>
-      <div class="w-[22px] h-[22px] rounded-full border-2 ${t.status==='current'?'bg-accent border-accent':'bg-bg border-border'} flex items-center justify-center flex-shrink-0 mt-0.5">${t.status==='done'?'✓':t.status==='current'?'<span class="w-2 h-2 bg-white rounded-full pulse block"></span>':''}</div>
-      <div class="flex-1 -mt-1">
-        <div class="flex justify-between"><div><div class="text-[12px] text-white/40 font-mono">${t.start} - ${t.end}</div><div class="font-semibold text-[14px] mt-0.5">${t.subject} ${t.special?'<span class="px-1.5 py-0.5 rounded bg-accent/20 text-accent2 text-[10px]">SPÉ</span>':''}</div><div class="text-[12px] text-white/50">${t.teacher} • ${t.room}</div></div><div class="w-8 h-8 rounded-xl ${t.color} flex items-center justify-center">${t.icon}</div></div>
-        ${t.status==='current'?'<div class="mt-2 inline-flex px-2.5 py-1 rounded-full bg-accent/15 text-accent2 text-[11px] font-bold">● Cours actuel</div>':''}
-      </div>
-    </div>
-  `).join('');
-  document.getElementById('todoList').innerHTML = demoData.homeworks.slice(0,3).map(h=>`
-    <div class="flex gap-3 p-2.5 rounded-xl bg-[#0B1224] border border-border"><div class="w-8 h-8 rounded-lg ${h.color} flex items-center justify-center text-[12px] font-bold">${h.subject[0]}</div><div class="flex-1"><div class="text-[13px] font-medium truncate">${h.subject} - ${h.title}</div><div class="text-[11px] text-white/40">${h.due}</div></div></div>
-  `).join('');
-  document.getElementById('edtList').innerHTML = demoData.timetable.map(t=>`
-    <div class="card rounded-[16px] p-4 flex gap-4"><div class="text-[12px] font-mono text-white/40 w-[90px]">${t.start} - ${t.end}</div><div class="w-9 h-9 rounded-xl ${t.color} flex items-center justify-center">${t.icon}</div><div class="flex-1"><div class="font-semibold text-[14px]">${t.subject}</div><div class="text-[12px] text-white/50">${t.teacher} • ${t.room}</div></div></div>
-  `).join('');
-  document.getElementById('notesGrid').innerHTML = demoData.grades.map(g=>`
-    <div class="card rounded-[18px] p-4"><div class="flex items-center gap-2 mb-2"><div class="w-7 h-7 rounded-lg ${g.color} flex items-center justify-center text-[12px] font-bold">${g.subject[0]}</div><div class="font-semibold text-[13px]">${g.subject}</div></div><div class="text-[22px] font-bold">${g.avg} <span class="text-[12px] font-normal text-white/40">/20</span></div><div class="text-[11px] text-white/40">Coef. ${g.coeff}</div></div>
-  `).join('');
-  document.getElementById('homeworkList').innerHTML = demoData.homeworks.map(h=>`
-    <div class="card rounded-[18px] p-4 flex gap-3"><div class="w-10 h-10 rounded-xl ${h.color} flex items-center justify-center font-bold">${h.subject[0]}</div><div class="flex-1"><div class="font-semibold text-[14px]">${h.subject}</div><div class="text-[13px] text-white/70">${h.title}</div><div class="text-[11px] text-white/40 mt-1">${h.due}</div></div><div class="w-7 h-7 rounded-full border-2 ${h.done?'bg-success border-success':''} border-border flex items-center justify-center">${h.done?'✓':''}</div></div>
-  `).join('');
-  document.getElementById('calendarDay').innerHTML = demoData.timetable.map(t=>`<div class="flex gap-3"><div class="text-[12px] font-mono text-white/40 w-[44px]">${t.start}</div><div class="w-1 rounded-full ${t.color}"></div><div class="flex-1 flex justify-between"><div><div class="text-[13px] font-medium">${t.subject}</div><div class="text-[11px] text-white/40">${t.room}</div></div></div></div>`).join('');
-  document.getElementById('absenceList').innerHTML = demoData.absences.map(a=>`<div class="card rounded-[18px] p-4 flex gap-3"><div class="w-9 h-9 rounded-xl bg-[#1E2B4A] border border-border flex items-center justify-center">⚠️</div><div><div class="font-medium text-[13px]">${a.date}</div><div class="text-[13px]">${a.type}</div><div class="text-[12px] text-white/40">${a.reason}</div></div></div>`).join('');
-  document.getElementById('cahierList').innerHTML = demoData.cahier.map(c=>`<div class="card rounded-[18px] p-4"><div class="flex gap-3 mb-2"><div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center font-bold text-[12px]">${c.subject[0]}</div><div><div class="font-semibold text-[14px]">${c.subject}</div><div class="text-[12px] text-white/40">${c.teacher}</div></div></div><div class="text-[13px] text-white/70 bg-bg border border-border rounded-xl p-3">${c.content}</div></div>`).join('');
-  document.getElementById('averagesList').innerHTML = demoData.grades.map(g=>`<div><div class="flex justify-between text-[13px] mb-1.5"><span>${g.subject}</span><span class="font-bold">${g.avg}</span></div><div class="h-2 rounded-full bg-bg border border-border overflow-hidden"><div class="h-full ${g.color} rounded-full" style="width:${parseFloat(g.avg.replace(',','.'))/20*100}%"></div></div></div>`).join('');
-}
-
-function navigate(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-  document.getElementById('page-'+page).classList.remove('hidden');
-  document.querySelectorAll('.navBtn').forEach(b=>{
-    const active = b.dataset.nav===page || (page==='moyennes'&&b.dataset.nav==='notes') || (['absences','cahier','calendrier','notifications','parametres'].includes(page)&&b.dataset.nav==='plus');
-    b.querySelector('span:first-child').className = `w-6 h-6 flex items-center justify-center rounded-lg ${active?'bg-accent text-white':'text-white/50'}`;
-    b.querySelector('span:last-child').className = `text-[10px] ${active?'text-white':'text-white/50'}`;
-  });
-  document.querySelectorAll('#desktopNav button').forEach(b=>{
-    const active = b.dataset.nav===page;
-    b.className = `w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${active?'bg-accent text-white':'text-white/60 hover:bg-white/5'}`;
+// Tabs
+function switchTab(tab){
+  ['Qr','Direct','Edu'].forEach(t=>{
+    $(`panel${t}`).classList.toggle('hidden', t!==tab);
+    $(`tab${t}`).className = t===tab ? 'flex-1 h-[36px] rounded-lg bg-accent text-white font-semibold text-[13px]' : 'flex-1 h-[36px] rounded-lg text-white/60 text-[13px]';
   });
 }
+$('tabQr').onclick = ()=>switchTab('Qr');
+$('tabDirect').onclick = ()=>switchTab('Direct');
+$('tabEdu').onclick = ()=>switchTab('Edu');
 
-function initNav(){
-  const items=[
-    {id:'accueil',label:'Accueil',icon:'🏠'},{id:'edt',label:'Emploi du temps',icon:'📅'},{id:'notes',label:'Notes',icon:'📝'},{id:'devoirs',label:'Devoirs',icon:'📚'},{id:'calendrier',label:'Calendrier',icon:'🗓️'},{id:'plus',label:'Plus',icon:'•••'},
-  ];
-  document.getElementById('desktopNav').innerHTML = items.map(i=>`<button data-nav="${i.id}" onclick="navigate('${i.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${i.id==='accueil'?'bg-accent text-white':'text-white/60 hover:bg-white/5'}"><span>${i.icon}</span>${i.label}</button>`).join('');
-}
-
-// FLUX DIRECT + QR CODE (le plus fiable) + fallback proxy
-let pollingInterval = null;
-
-document.getElementById('btnLinkEduconnect').onclick=()=>{
-  const url = document.getElementById('pronoteUrl').value.trim();
-  if(!url) return alert('Entre ton URL Pronote');
-  state.pronoteUrl=url; save();
-  
-  // On ouvre Toutatice en DIRECT (pas via proxy) car le proxy casse EduConnect SAML
-  const statusDiv = document.createElement('div');
-  statusDiv.id = 'pollingStatus';
-  statusDiv.className = 'mt-4 p-4 rounded-xl bg-success/10 border border-success/30 text-[13px]';
-  statusDiv.innerHTML = '<div class="font-bold text-success">🔗 Toutatice ouvert en direct</div><div class="text-white/60 mt-2">1. Connecte-toi via EduConnect dans le nouvel onglet<br>2. Une fois dans Pronote, va dans <b>Infos perso > QR Code</b><br>3. Génère le QR et colle-le ci-dessous → MyNote récupère tes vraies données automatiquement</div><div class="mt-3"><button onclick="document.getElementById(\'qrArea\').classList.remove(\'hidden\')" class="px-4 py-2 rounded-xl bg-accent text-white text-[12px]">J\'ai mon QR Code →</button></div>';
-  
-  // Supprime ancien status si existe
-  const old = document.getElementById('pollingStatus');
-  if(old) old.remove();
-  document.getElementById('btnLinkEduconnect').parentNode.appendChild(statusDiv);
-  
-  // Ouvre Toutatice en DIRECT (pas proxy) - c'est le seul qui marche à 100% pour EduConnect
-  window.open('https://www.toutatice.fr', '_blank');
-  
-  // Affiche direct la zone QR
-  document.getElementById('qrArea').classList.remove('hidden');
-  document.getElementById('btnLinkEduconnect').innerHTML = '✅ Toutatice ouvert → colle ton QR Code ci-dessous';
-  
-  localStorage.setItem('mynote_pending_auth', JSON.stringify({pronoteUrl:url, at:Date.now(), direct:true}));
-};
-
-document.getElementById('btnBookmarklet').onclick=()=>{
-  document.getElementById('bookmarkletArea').classList.toggle('hidden');
-  const currentOrigin = location.origin;
-  const js = `javascript:(function(){try{const d={url:location.href,cookies:document.cookie,ls:Object.assign({},localStorage),ss:Object.assign({},sessionStorage),html:document.documentElement.innerHTML.substring(0,5000)};const t=btoa(unescape(encodeURIComponent(JSON.stringify(d))));location.href='${currentOrigin}/auth/callback?data='+encodeURIComponent(t)+'&realUrl='+encodeURIComponent(location.href);}catch(e){alert('Erreur MyNote: '+e.message)}})();`;
-  document.getElementById('bookmarkletLink').href = js;
-};
-
-document.getElementById('btnQR').onclick=()=>{
-  document.getElementById('qrArea').classList.toggle('hidden');
-};
-
-document.getElementById('btnConnectQR').onclick=async()=>{
-  const qr=document.getElementById('qrInput').value.trim();
-  if(!qr) return alert('Colle ton QR Code');
-  const pin = prompt('Entre le code PIN à 4 chiffres affiché avec le QR Code dans Pronote (ex: 1234) :') || '';
-  
-  document.getElementById('btnConnectQR').innerHTML = '⏳ Connexion via QR Code...';
-  document.getElementById('btnConnectQR').disabled = true;
-  
-  try {
-    const res = await fetch('/api/login-qr', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({qrData: qr, pin})
-    });
-    const data = await res.json();
-    
-    if(data.success) {
-      // Sauvegarde les vraies données
-      state.isDemo=false; 
-      state.realData = data;
-      state.lastSync=Date.now(); 
-      state.user = data.user;
-      save();
-      localStorage.setItem('mynote_real_data', JSON.stringify(data));
-      
-      alert('✅ Connecté ! ' + (data.user?.name||'') + ' - ' + (data.timetable?.classes?.length||0) + ' cours récupérés');
-      enterApp();
-      // Affiche les vraies données si possible
-      if(data.timetable && data.timetable.classes) {
-        // On pourrait parser les vraies données ici
-        console.log('Real timetable', data.timetable);
-      }
+// Test URL
+$('btnTestUrl').onclick = async ()=>{
+  const url = $('pronoteUrl').value.trim();
+  if(!url) return;
+  const r = $('urlTestResult'); r.classList.remove('hidden'); r.textContent='Test en cours...'; r.className='mt-2 text-[12px] p-2 rounded-lg bg-white/5';
+  try{
+    const res = await fetch(`/api/test-pronote?url=${encodeURIComponent(url)}`);
+    const j = await res.json();
+    if(j.success){
+      r.className='mt-2 text-[12px] p-2 rounded-lg bg-success/20 text-success border border-success/20';
+      r.innerHTML = `✅ OK: ${j.instance.name} v${j.instance.version?.join('.')} ${j.instance.hasCAS?'• CAS: '+j.instance.casURL:''}`;
     } else {
-      alert('❌ Erreur: ' + (data.error||'QR invalide') + '\n' + (data.details||''));
-      document.getElementById('btnConnectQR').innerHTML = 'Se connecter avec ce QR';
-      document.getElementById('btnConnectQR').disabled = false;
+      r.className='mt-2 text-[12px] p-2 rounded-lg bg-danger/20 text-danger border border-danger/20';
+      r.innerHTML = `❌ ${j.error} (${j.name||''})<br><span class="text-[11px] opacity-80">${j.help||''}</span>`;
     }
-  } catch(e){
-    alert('Erreur réseau: ' + e.message);
-    document.getElementById('btnConnectQR').innerHTML = 'Se connecter avec ce QR';
-    document.getElementById('btnConnectQR').disabled = false;
+  }catch(e){
+    r.className='mt-2 text-[12px] p-2 rounded-lg bg-danger/20 text-danger';
+    r.textContent = 'Erreur réseau: '+e.message;
   }
 };
 
-document.getElementById('btnScanQR').onclick=async()=>{
-  const scannerDiv = document.getElementById('qrScanner');
-  scannerDiv.classList.remove('hidden');
-  const reader = document.getElementById('qrReader');
-  reader.innerHTML = 'Demande accès caméra...';
-  
-  try {
-    const html5QrCode = new Html5Qrcode("qrReader");
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => {
-        document.getElementById('qrInput').value = decodedText;
-        html5QrCode.stop().then(()=>{ scannerDiv.classList.add('hidden'); });
-        // Auto-remplir
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-success text-white px-4 py-2 rounded-full text-[12px] font-bold z-50';
-        toast.textContent = '✅ QR Code scanné !';
-        document.body.appendChild(toast);
-        setTimeout(()=>toast.remove(), 2000);
-      },
-      (error) => {}
-    );
-  } catch(e){
-    reader.innerHTML = '❌ Caméra non dispo: ' + e.message + '<br><br>Utilise la méthode téléphone ou colle le texte manuellement.';
+// QR Scanner
+$('btnScanQR').onclick = async ()=>{
+  $('qrScanner').classList.remove('hidden');
+  html5Qr = new Html5Qrcode('qrReader');
+  try{
+    await html5Qr.start({facingMode:'environment'}, {fps:10, qrbox:{width:250,height:250}}, (decoded)=>{
+      $('qrData').value = decoded;
+      $('qrScanner').classList.add('hidden');
+      html5Qr.stop();
+      showStatus('qrStatus', '✅ QR scanné: '+decoded.substring(0,80)+'...', 'success');
+    }, ()=>{});
+  }catch(e){
+    showStatus('qrStatus', '❌ Caméra: '+e.message+' (autorise la caméra ou colle le lien manuellement)', 'error');
   }
 };
-
-document.getElementById('btnPasteQR').onclick=async()=>{
-  try {
+$('btnStopScan').onclick = ()=>{ if(html5Qr){ html5Qr.stop(); } $('qrScanner').classList.add('hidden'); };
+$('btnPasteQR').onclick = async ()=>{
+  try{
     const text = await navigator.clipboard.readText();
-    document.getElementById('qrInput').value = text;
-  } catch{
-    alert('Colle manuellement avec Ctrl+V dans la zone de texte');
+    $('qrData').value = text;
+    showStatus('qrStatus', '✅ Collé depuis presse-papier', 'success');
+  }catch{
+    showStatus('qrStatus', '❌ Presse-papier bloqué, fais Ctrl+V manuellement dans la zone', 'error');
   }
 };
 
-document.getElementById('btnDemo').onclick=()=>{
-  state.isDemo=true; save(); enterApp();
+function showStatus(id, msg, type){
+  const el = $(id); el.classList.remove('hidden'); el.textContent = msg;
+  el.className = 'text-[12px] p-3 rounded-xl ' + (type==='success' ? 'bg-success/20 text-success border border-success/20' : type==='error' ? 'bg-danger/20 text-danger border border-danger/20' : 'bg-white/5 border border-border');
+}
+
+function showGlobal(msg, type){
+  const el = $('globalStatus'); el.classList.remove('hidden'); el.innerHTML = msg;
+  el.className = 'mt-4 text-[12px] p-3 rounded-xl ' + (type==='success'?'bg-success/20 text-success border border-success/20':'bg-danger/20 text-danger border border-danger/20');
+}
+
+// QR Login
+$('btnConnectQR').onclick = async ()=>{
+  const qrData = $('qrData').value.trim();
+  const pin = $('qrPin').value.trim();
+  const pronoteUrl = $('pronoteUrl').value.trim();
+  if(!qrData){ showStatus('qrStatus','❌ Colle d\'abord le lien pronote://...','error'); return; }
+  if(!pin || pin.length!==4){ showStatus('qrStatus','❌ Entre le PIN à 4 chiffres affiché sous le QR Code dans Pronote','error'); return; }
+  showStatus('qrStatus','⏳ Connexion en cours via Pawnote... (ça peut prendre 5-10s)', 'info');
+  try{
+    const res = await fetch('/api/login-qr', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({qrData, pin})});
+    const j = await res.json();
+    if(!res.ok) throw new Error(j.error || j.originalError || 'Erreur inconnue');
+    showStatus('qrStatus','✅ Connecté: '+j.user.name,'success');
+    localStorage.setItem('mynote_real_data', JSON.stringify(j));
+    enterApp(j);
+  }catch(e){
+    showStatus('qrStatus','❌ '+e.message,'error');
+    showGlobal(`<b>Erreur QR détaillée:</b><br>${e.message}<br><br><b>Solutions:</b><br>1. Le QR expire après 10 min → génère un NOUVEAU QR dans Pronote et réessaie IMMÉDIATEMENT<br>2. Vérifie le PIN à 4 chiffres (sous le QR)<br>3. Si "Page n'existe pas": ton collège bloque Render → essaie login direct<br><button onclick="fetch('/api/debug/last').then(r=>r.json()).then(j=>alert(JSON.stringify(j.lastError,null,2)))" class="mt-2 px-2 py-1 rounded bg-white/10 text-[11px]">Voir log serveur</button>`, 'error');
+  }
 };
 
-function enterApp(){
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('mainApp').classList.remove('hidden');
-  document.getElementById('mainApp').classList.add('flex');
-  document.getElementById('demoBadge').classList.toggle('hidden', !state.isDemo);
-  document.getElementById('realBadge').classList.toggle('hidden', state.isDemo);
-  document.getElementById('syncText').textContent = state.isDemo ? 'Mode démo • Données fictives' : 'Synchronisé via EduConnect • Lien officiel';
-  renderToday(); navigate('accueil');
-}
-
-document.getElementById('btnLogout').onclick=()=>{if(confirm('Déconnexion ?')){localStorage.clear(); location.reload();}};
-
-document.querySelectorAll('.navBtn').forEach(b=>b.onclick=()=>navigate(b.dataset.nav));
-
-initNav();
-document.getElementById('currentDate').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-
-// Check if we are returning from EduConnect via callback
-const params = new URLSearchParams(location.search);
-if(params.has('data') || params.has('ticket') || location.pathname.includes('/auth/callback')){
-  // We are back from EduConnect flow
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('mainApp').classList.remove('hidden');
-  document.getElementById('mainApp').classList.add('flex');
-  document.getElementById('realBadge').classList.remove('hidden');
-  document.getElementById('demoBadge').classList.add('hidden');
-  document.getElementById('syncText').textContent = '✅ Retour EduConnect • Session capturée';
-  renderToday(); navigate('accueil');
-  // Save real data
-  state.isDemo=false; state.lastSync=Date.now(); 
-  if(params.has('data')) state.capturedData=params.get('data');
-  if(params.has('realUrl')) state.realUrl=params.get('realUrl');
-  save();
-  // Clean URL
-  history.replaceState({}, '', '/');
-}
-
-if(localStorage.getItem('mynote_state')){
-  const s=JSON.parse(localStorage.getItem('mynote_state'));
-  if(s.pronoteUrl) document.getElementById('pronoteUrl').value=s.pronoteUrl;
-  if(s.isDemo===false && s.lastSync){
-    // Auto-enter if already connected via link
-    enterApp();
+// Direct Login
+$('btnConnectDirect').onclick = async ()=>{
+  const pronoteUrl = $('pronoteUrl').value.trim();
+  const username = $('directUser').value.trim();
+  const password = $('directPass').value;
+  if(!pronoteUrl||!username||!password){ showStatus('directStatus','❌ Remplis URL, identifiant, mot de passe','error'); return; }
+  showStatus('directStatus','⏳ Connexion directe...','info');
+  try{
+    const res = await fetch('/api/login-direct', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pronoteUrl, username, password})});
+    const j = await res.json();
+    if(!res.ok) throw new Error(j.error || j.originalError);
+    showStatus('directStatus','✅ Connecté: '+j.user.name,'success');
+    localStorage.setItem('mynote_real_data', JSON.stringify(j));
+    enterApp(j);
+  }catch(e){
+    showStatus('directStatus','❌ '+e.message,'error');
   }
+};
+
+// EduConnect Link
+$('btnLinkEduconnect').onclick = ()=>{
+  const url = $('pronoteUrl').value.trim() || 'https://www.toutatice.fr';
+  window.open('https://www.toutatice.fr', '_blank');
+  $('eduStatus').classList.remove('hidden');
+  $('eduStatus').className='text-[12px] p-3 rounded-xl bg-accent/10 border border-accent/20';
+  $('eduStatus').innerHTML = `✅ Toutatice ouvert dans un nouvel onglet.<br>1. Connecte-toi via EduConnect<br>2. Va dans Pronote<br>3. Génère un QR Code dans Infos perso > Compte > QR Code<br>4. Reviens ici onglet MyNote → colle le QR dans l'onglet QR Code`;
+};
+
+function enterApp(data){
+  $('loginScreen').classList.add('hidden');
+  $('appScreen').classList.remove('hidden');
+  $('realBadge').classList.remove('hidden');
+  $('userInfo').innerHTML = `<div class="font-bold text-[18px]">${data.user?.name||'Élève'}</div><div class="text-[13px] text-white/60">${data.user?.class||''} • ${data.instance?.url||''}</div>`;
+  // Timetable
+  try{
+    const tt = data.timetable;
+    if(tt?.classes?.length){ $('timetableView').innerHTML = tt.classes.slice(0,8).map(c=>`<div class="py-1 border-b border-border/50"><b>${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</b> ${c.subject?.name||c.name||'Cours'} - ${c.teacher?.name||''} ${c.room?.name||''}</div>`).join(''); }
+    else { $('timetableView').innerHTML = '<div class="text-white/40">Pas de cours cette semaine ou erreur: '+(tt?.error||'vide')+'</div>'; }
+  }catch{}
+  try{
+    const g = data.grades;
+    if(g?.averages){ $('gradesView').innerHTML = `Moyenne: ${g.averages?.student||'?'}<br>${(g.grades||[]).slice(0,5).map(gr=>`${gr.subject?.name||'?'}: ${gr.grade?.value||gr.value||'?'}<br>`).join('')}`; }
+    else { $('gradesView').innerHTML = 'Notes: '+(g?.error||JSON.stringify(g).substring(0,200)); }
+  }catch{}
+  try{
+    const hw = data.homeworks;
+    if(Array.isArray(hw) && hw.length){ $('homeworksView').innerHTML = hw.slice(0,5).map(h=>`<div class="py-1 border-b border-border/50"><b>${h.subject?.name||''}</b> ${h.description?.substring(0,80)||''}</div>`).join(''); }
+    else { $('homeworksView').innerHTML = 'Pas de devoirs ou '+ (hw?.length===0?'aucun cette semaine':'erreur'); }
+  }catch{}
+  $('rawData').textContent = JSON.stringify(data,null,2);
+  $('rawData').classList.remove('hidden');
 }
+
+// Auto-load if real data exists
+const saved = localStorage.getItem('mynote_real_data');
+if(saved){ try{ enterApp(JSON.parse(saved)); }catch{} }
+
 </script>
 </body>
 </html>

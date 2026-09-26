@@ -16,8 +16,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(__dirname));
 
-// Cookie jars
+// Debug storage
+let lastError = null;
+let lastSuccess = null;
 const jars = new Map();
+
 function getSid(req, res) {
   let sid = req.cookies.mynote_sid;
   if (!sid) {
@@ -66,385 +69,113 @@ function storeCookies(jar, targetUrl, setCookieHeaders) {
   }
 }
 
-// Injected script for MyNote extraction
-function getInjectScript(baseUrl, autoReturn, pronoteUrl) {
-  const autoReturnScript = autoReturn ? `
-  // AUTO-RETURN MODE: Si on est sur Pronote eleve.html, on revient auto vers MyNote avec session
-  function checkAutoReturn(){
-    try {
-      const isPronoteEleve = BASE_URL.includes('pronote') && BASE_URL.includes('eleve.html');
-      const bodyText = document.body.innerText || '';
-      const isPronoteLoaded = bodyText.includes('Emploi du temps') || bodyText.includes('Notes') || document.querySelector('.EDT_Cours, .cours, [class*=\"emploi\"]');
-      
-      if(isPronoteEleve && (isPronoteLoaded || document.readyState==='complete')) {
-        // On est bien dans Pronote après login EduConnect
-        console.log('MyNote auto-return triggered');
-        
-        // Affiche un bandeau MyNote
-        const banner = document.createElement('div');
-        banner.innerHTML = '<div style="position:fixed;top:0;left:0;right:0;z-index:999999;background:#6C7CFF;color:white;padding:16px;text-align:center;font-family:Inter;font-weight:600">✅ Connecté via EduConnect ! Retour vers MyNote dans 2s...<br><span style="font-size:12px;opacity:0.8">Tes données vont s\\'afficher dans l\\'interface MyNote</span></div>';
-        document.body.prepend(banner.firstChild);
-        
-        // Capture quelques infos et retourne vers MyNote
-        setTimeout(()=>{
-          try {
-            // On redirige vers MyNote avec un flag de succès - le backend a déjà les cookies en mémoire
-            const returnUrl = location.origin.includes('mynote') ? '/' : 'https://mynote-k8am.onrender.com/';
-            // Si on est dans iframe proxy, on postMessage au parent, sinon on redirige direct
-            if(window.parent !== window) {
-              window.parent.postMessage({type:'mynote:auto-return', realUrl: BASE_URL}, '*');
-            } else {
-              // Redirection directe automatique
-              window.location.href = returnUrl + '?real=1&auto=1&fromPronote=1&realUrl=' + encodeURIComponent(BASE_URL);
-            }
-          } catch(e){
-            window.location.href = 'https://mynote-k8am.onrender.com/?real=1&auto=1';
-          }
-        }, 2000);
-        return true;
-      }
-    } catch(e){ console.log('autoReturn check error', e); }
-    return false;
-  }
-  
-  // Check auto-return plusieurs fois
-  setTimeout(checkAutoReturn, 1000);
-  setTimeout(checkAutoReturn, 3000);
-  setTimeout(checkAutoReturn, 5000);
-  window.addEventListener('load', ()=>setTimeout(checkAutoReturn, 1500));
-  ` : '';
+// Health
+app.get('/api/health', (req,res)=>{
+  res.json({ok:true, jars:jars.size, pawnote:true, flow:'link-educonnect-debug', lastError: lastError?.time, lastSuccess: lastSuccess?.time});
+});
+app.get('/api/debug/last', (req,res)=>{
+  res.json({lastError, lastSuccess});
+});
 
-  return `
-<script>
-(function(){
-  const BASE_URL = '${baseUrl.replace(/'/g,"\\'")}';
-  const PRONOTE_URL = '${(pronoteUrl||'').replace(/'/g,"\\'")}';
-  const AUTO_RETURN = ${autoReturn ? 'true' : 'false'};
-  
-  // Keep navigation inside proxy
-  document.addEventListener('click', function(e){
-    let a = e.target.closest('a[href]');
-    if(!a) return;
-    let href = a.getAttribute('href');
-    if(!href || href.startsWith('javascript:') || href.startsWith('#') || href.startsWith('data:') || href.startsWith('mailto:')) return;
-    try {
-      let abs = new URL(href, window.location.href);
-      if(abs.pathname.startsWith('/browse')) return;
-      if(abs.protocol !== 'http:' && abs.protocol !== 'https:') return;
-      e.preventDefault();
-      const autoParam = AUTO_RETURN ? '&autoReturn=1' : '';
-      window.location.href = '/browse?url=' + encodeURIComponent(abs.toString()) + autoParam;
-    } catch {}
-  }, true);
-  
-  document.addEventListener('submit', function(e){
-    let form = e.target;
-    if(!form.action) return;
-    try {
-      let abs = new URL(form.action, window.location.href);
-      if(abs.pathname.startsWith('/browse')) return;
-      if(abs.protocol !== 'http:' && abs.protocol !== 'https:') return;
-      const autoParam = AUTO_RETURN ? (abs.toString().includes('?') ? '&autoReturn=1' : '?autoReturn=1') : '';
-      form.action = '/browse?url=' + encodeURIComponent(abs.toString() + autoParam);
-    } catch {}
-  }, true);
-
-  // Notify parent
+// Test Pronote URL
+app.get('/api/test-pronote', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url manquant' });
   try {
-    window.parent.postMessage({type:'mynote:navigate', url: window.location.href, realUrl: BASE_URL, autoReturn: AUTO_RETURN}, '*');
-  } catch {}
-
-  ${autoReturnScript}
-
-  // MyNote extractor
-  function extractPronoteData(){
-    try {
-      const bodyText = document.body.innerText || '';
-      const isPronote = BASE_URL.includes('pronote') && (BASE_URL.includes('eleve.html') || bodyText.includes('PRONOTE'));
-      if(isPronote) {
-        window.parent.postMessage({type:'mynote:pronote-detected', realUrl: BASE_URL}, '*');
-      }
-    } catch(e){}
-  }
-  
-  if(document.readyState === 'complete') extractPronoteData();
-  else window.addEventListener('load', extractPronoteData);
-  setTimeout(extractPronoteData, 2000);
-
-  // Hook XHR
-  (function(){
-    const origOpen = XMLHttpRequest.prototype.open;
-    const origSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.open = function(method, url){
-      this._mynote_url = url;
-      this._mynote_method = method;
-      return origOpen.apply(this, arguments);
-    };
-    XMLHttpRequest.prototype.send = function(){
-      this.addEventListener('load', function(){
-        try {
-          if(this._mynote_url && this._mynote_url.includes('pronote') && this.responseText) {
-            const preview = this.responseText.substring(0,2000);
-            if(preview.includes('ListeCours') || preview.includes('Moyenne') || preview.includes('TAF') || preview.includes('Notes')) {
-              window.parent.postMessage({
-                type:'mynote:api-captured',
-                url: this._mynote_url,
-                preview: preview.substring(0,3000),
-                realBaseUrl: BASE_URL
-              }, '*');
-            }
-          }
-        } catch {}
-      });
-      return origSend.apply(this, arguments);
-    };
-  })();
-})();
-</script>
-`;
-}
-
-function rewriteHtml(html, baseUrl, autoReturn, pronoteUrl) {
-  try {
-    const $ = cheerio.load(html, { decodeEntities: false });
-    $('meta[http-equiv="Content-Security-Policy"]').remove();
-    $('meta[http-equiv="X-Frame-Options"]').remove();
-    $('meta[http-equiv="content-security-policy"]').remove();
-    $('head').append(getInjectScript(baseUrl, autoReturn, pronoteUrl));
-
-    const attrs = [
-      { sel: 'a[href]', attr: 'href' },
-      { sel: 'link[href]', attr: 'href' },
-      { sel: 'img[src]', attr: 'src' },
-      { sel: 'script[src]', attr: 'src' },
-      { sel: 'iframe[src]', attr: 'src' },
-      { sel: 'form[action]', attr: 'action' },
-    ];
-    for (const { sel, attr } of attrs) {
-      $(sel).each((_, el) => {
-        let val = $(el).attr(attr);
-        if (!val) return;
-        if (val.startsWith('data:') || val.startsWith('blob:') || val.startsWith('javascript:') || val.startsWith('#') || val.startsWith('mailto:')) return;
-        if (val.startsWith('/browse?url=')) return;
-        try {
-          const absolute = new URL(val, baseUrl).toString();
-          if (!absolute.startsWith('http://') && !absolute.startsWith('https://')) return;
-          $(el).attr(attr, '/browse?url=' + encodeURIComponent(absolute));
-        } catch {}
-      });
-    }
-    $('[style]').each((_, el) => {
-      let style = $(el).attr('style');
-      if (!style || !style.includes('url(')) return;
-      try {
-        const newStyle = style.replace(/url\(['"]?([^'")]+)['"]?\)/g, (m, url) => {
-          if (url.startsWith('data:')) return m;
-          try {
-            const absolute = new URL(url, baseUrl).toString();
-            return `url('/browse?url=${encodeURIComponent(absolute)}')`;
-          } catch { return m; }
-        });
-        $(el).attr('style', newStyle);
-      } catch {}
-    });
-    return $.html();
-  } catch (e) {
-    console.error('rewrite error', e);
-    return html;
-  }
-}
-
-// Proxy endpoint
-app.all('/browse', async (req, res) => {
-  const targetUrl = req.query.url || req.body?.url;
-  const autoReturn = req.query.autoReturn === '1' || req.body?.autoReturn === '1';
-  const pronoteUrl = req.query.pronoteUrl || req.body?.pronoteUrl || '';
-  if (!targetUrl) return res.status(400).send('URL manquante');
-  let parsedTarget;
-  try { parsedTarget = new URL(targetUrl); } catch { return res.status(400).send('URL invalide'); }
-  if (!['http:', 'https:'].includes(parsedTarget.protocol)) return res.status(400).send('Protocole non autorisé');
-
-  const sid = getSid(req, res);
-  const jar = jars.get(sid);
-  const headers = {};
-  if (req.headers['user-agent']) headers['User-Agent'] = req.headers['user-agent'];
-  if (req.headers['accept']) headers['Accept'] = req.headers['accept'];
-  if (req.headers['accept-language']) headers['Accept-Language'] = req.headers['accept-language'];
-  if (req.headers['referer']) {
-    try {
-      const refUrl = new URL(req.headers['referer']);
-      const realRef = refUrl.searchParams.get('url');
-      headers['Referer'] = realRef ? realRef : targetUrl;
-    } catch { headers['Referer'] = targetUrl; }
-  }
-  if (req.headers['content-type']) headers['Content-Type'] = req.headers['content-type'];
-  const cookieHeader = getCookiesForUrl(jar, targetUrl);
-  if (cookieHeader) headers['Cookie'] = cookieHeader;
-
-  let body = undefined;
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    if (req.is('application/x-www-form-urlencoded')) {
-      body = new URLSearchParams(req.body).toString();
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    } else if (req.is('application/json')) {
-      body = JSON.stringify(req.body);
-      headers['Content-Type'] = 'application/json';
-    } else if (req.body && Object.keys(req.body).length) {
-      body = new URLSearchParams(req.body).toString();
-    }
-  }
-
-  try {
-    const upstreamRes = await fetch(targetUrl, { method: req.method, headers, body, redirect: 'manual' });
-    const setCookies = upstreamRes.headers.getSetCookie ? upstreamRes.headers.getSetCookie() : upstreamRes.headers.get('set-cookie');
-    if (setCookies) storeCookies(jar, targetUrl, setCookies);
-
-    if (upstreamRes.status >= 300 && upstreamRes.status < 400) {
-      const location = upstreamRes.headers.get('location');
-      if (location) {
-        const absoluteLocation = new URL(location, targetUrl).toString();
-        return res.redirect(302, '/browse?url=' + encodeURIComponent(absoluteLocation));
-      }
-    }
-
-    const contentType = upstreamRes.headers.get('content-type') || '';
-    if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
-      let html = await upstreamRes.text();
-      html = rewriteHtml(html, targetUrl, autoReturn, pronoteUrl);
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('X-Frame-Options', 'ALLOWALL');
-      res.setHeader('Content-Security-Policy', "frame-ancestors *");
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'no-store');
-      return res.send(html);
-    } else {
-      const buffer = Buffer.from(await upstreamRes.arrayBuffer());
-      if (contentType) res.setHeader('Content-Type', contentType);
-      res.setHeader('X-Frame-Options', 'ALLOWALL');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      if (contentType.includes('text/css')) {
-        let css = buffer.toString('utf-8');
-        css = css.replace(/url\(['"]?([^'")]+)['"]?\)/g, (m, url) => {
-          if (url.startsWith('data:')) return m;
-          try {
-            const absolute = new URL(url, targetUrl).toString();
-            return `url('/browse?url=${encodeURIComponent(absolute)}')`;
-          } catch { return m; }
-        });
-        return res.send(css);
-      }
-      return res.send(buffer);
-    }
-  } catch (err) {
-    console.error('Proxy error', targetUrl, err);
-    res.status(500).send(`<html><body style="background:#0B1224;color:white;padding:40px;font-family:Inter"><h2>Erreur proxy</h2><p>${targetUrl}</p><pre>${err.message}</pre><a href="/" style="color:#6C7CFF">Retour MyNote</a></body></html>`);
+    const clean = pawnote.cleanURL(url);
+    console.log('[test-pronote] cleanURL', clean);
+    const instance = await pawnote.instance(clean);
+    res.json({ success: true, cleanUrl: clean, instance: { name: instance.name, version: instance.version, hasCAS: !!instance.casURL, casURL: instance.casURL, casToken: instance.casToken } });
+  } catch(e){
+    console.error('[test-pronote] error', e);
+    lastError = { time: new Date().toISOString(), endpoint: 'test-pronote', url, error: e.message, name: e.name, stack: e.stack?.substring(0,1000) };
+    res.status(500).json({ error: e.message, name: e.name, help: e.name==='PageUnavailableError' ? 'Ton Pronote bloque les serveurs externes (Render). Essaie le login direct avec identifiants Pronote ou utilise MyNote en local.' : '' });
   }
 });
 
-// Real Pronote extraction via Pawnote
-app.post('/api/login-pronote', async (req, res) => {
+// Login direct Pronote (identifiants Pronote fournis par le collège, pas EduConnect)
+app.post('/api/login-direct', async (req,res)=>{
   const { pronoteUrl, username, password } = req.body;
-  if (!pronoteUrl || !username || !password) {
-    return res.status(400).json({ error: 'pronoteUrl, username, password requis' });
-  }
+  if (!pronoteUrl || !username || !password) return res.status(400).json({error:'pronoteUrl, username, password requis'});
+  console.log('[login-direct] attempt', pronoteUrl, username);
   try {
-    const cleanUrl = pawnote.cleanURL(pronoteUrl);
+    const clean = pawnote.cleanURL(pronoteUrl);
     const session = pawnote.createSessionHandle();
+    const deviceUUID = 'mynote-' + Math.random().toString(36).slice(2) + Date.now().toString(36).slice(2);
     
-    // Get instance
-    const instance = await pawnote.instance(cleanUrl);
-    console.log('Instance:', instance.name, 'CAS:', instance.casURL);
-
-    // If CAS (ENT like Toutatice), we need to handle differently
-    // For now, try direct credentials login
-    const kind = pawnote.AccountKind.STUDENT;
-    
-    await pawnote.loginCredentials(session, {
-      url: cleanUrl,
-      kind,
+    const login = await pawnote.loginCredentials(session, {
+      url: clean,
+      kind: pawnote.AccountKind.STUDENT,
       username,
       password,
-      deviceUUID: 'mynote-' + Math.random().toString(36).slice(2),
+      deviceUUID,
       navigatorIdentifier: 'MyNote/1.0'
     });
-
-    // If success, fetch real data
-    const [timetable, grades, homeworks, notebook] = await Promise.all([
-      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>({error:e.message, classes:[]})),
-      pawnote.gradesOverview(session).catch(e=>({error:e.message})),
-      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>[]),
-      pawnote.homepage(session).catch(e=>null)
+    
+    console.log('[login-direct] success', session.user?.name);
+    
+    const [timetable, grades, homeworks] = await Promise.all([
+      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>{console.log('timetable error', e.message); return {error:e.message, classes:[]}}),
+      pawnote.gradesOverview(session).catch(e=>{console.log('grades error', e.message); return {error:e.message}}),
+      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>{console.log('homeworks error', e.message); return []})
     ]);
-
+    
+    lastSuccess = { time: new Date().toISOString(), method: 'direct', user: session.user?.name };
+    
     res.json({
       success: true,
-      user: session.user,
-      instance: { name: instance.name, version: instance.version },
-      timetable,
-      grades,
-      homeworks,
-      homepage: homepage ? { hasData: true } : null
+      user: { name: session.user?.name, class: session.user?.studentClass?.name, id: session.user?.id },
+      instance: { url: clean },
+      timetable, grades, homeworks
     });
-
-  } catch (err) {
-    console.error('Pawnote login error', err);
-    res.status(500).json({ 
-      error: err.message, 
-      name: err.name,
-      details: 'Vérifie ton URL Pronote et tes identifiants. Pour Toutatice/EduConnect, utilise le QR Code.'
-    });
+  } catch(err){
+    console.error('[login-direct] error', err);
+    lastError = { time: new Date().toISOString(), endpoint: 'login-direct', pronoteUrl, username, error: err.message, name: err.name, stack: err.stack?.substring(0,1500) };
+    let friendly = err.message;
+    if (err.name==='BadCredentialsError') friendly = 'Identifiants incorrects';
+    if (err.name==='PageUnavailableError') friendly = 'Page Pronote non trouvée - URL invalide ou serveur Pronote bloque Render (IP datacenter). Essaie avec l\'URL exacte de ton collège.';
+    if (err.name==='AccessDeniedError') friendly = 'Accès refusé - compte désactivé ou pas les droits';
+    res.status(500).json({ error: friendly, originalError: err.message, name: err.name, stack: err.stack?.substring(0,500) });
   }
 });
 
-// QR Code login - méthode officielle Pronote - VERSION CORRIGÉE
+// QR Code login - VERSION DEBUG AMÉLIORÉE
 app.post('/api/login-qr', async (req, res) => {
   const { qrData, pin } = req.body;
   if (!qrData) return res.status(400).json({ error: 'qrData manquant' });
   
-  console.log('QR login attempt, pin:', pin, 'qr length:', qrData.length, 'qr preview:', qrData.substring(0,100));
+  console.log('[login-qr] attempt pin:', pin, 'len:', qrData.length, 'preview:', qrData.substring(0,120));
   
   try {
     let qrObj = null;
     let cleanQrData = qrData.trim();
     
-    // Essaie de parser différents formats
-    // Format 1: pronote://?url=...&login=...&jeton=...&pin=...
-    // Format 2: JSON {"url": "...", "login": "...", "jeton": "..."}
-    // Format 3: Base64 ou autre
-    
     if (cleanQrData.startsWith('pronote://')) {
       try {
         const urlObj = new URL(cleanQrData);
         qrObj = {
-          url: urlObj.searchParams.get('url') || urlObj.searchParams.get('pronote_url'),
+          url: urlObj.searchParams.get('url'),
           login: urlObj.searchParams.get('login'),
           jeton: urlObj.searchParams.get('jeton') || urlObj.searchParams.get('token')
         };
-        console.log('Parsed pronote:// URL', qrObj);
+        console.log('[login-qr] parsed pronote://', qrObj.url, qrObj.login);
       } catch(e) {
-        console.log('Failed to parse pronote:// URL', e.message);
+        console.log('[login-qr] failed parse pronote://', e.message);
       }
     }
     
     if (!qrObj || !qrObj.url) {
       try {
         const parsed = JSON.parse(cleanQrData);
-        if (parsed.url && parsed.login && parsed.jeton) {
-          qrObj = parsed;
-        } else if (parsed.data) {
-          // Parfois c'est nested
-          qrObj = parsed.data;
-        }
+        if (parsed.url && parsed.login && parsed.jeton) qrObj = parsed;
+        else if (parsed.data && parsed.data.url) qrObj = parsed.data;
       } catch {}
     }
     
     if (!qrObj || !qrObj.url) {
-      // Essaie de trouver url, login, jeton dans le texte avec regex
-      const urlMatch = cleanQrData.match(/https?:\/\/[^\s&"]+\.index-education\.net\/pronote\/?/);
-      const loginMatch = cleanQrData.match(/"login"\s*:\s*"([^"]+)"|login=([^&\s]+)/);
-      const jetonMatch = cleanQrData.match(/"jeton"\s*:\s*"([^"]+)"|jeton=([^&\s]+)/);
-      
+      const urlMatch = cleanQrData.match(/https?:\/\/[^\s&"']+\.index-education\.net\/pronote\/?/i);
+      const loginMatch = cleanQrData.match(/"login"\s*:\s*"([^"]+)"|login=([^&\s"']+)/i);
+      const jetonMatch = cleanQrData.match(/"jeton"\s*:\s*"([^"]+)"|jeton=([^&\s"']+)/i);
       if (urlMatch) {
         qrObj = {
           url: urlMatch[0],
@@ -455,183 +186,164 @@ app.post('/api/login-qr', async (req, res) => {
     }
     
     if (!qrObj || !qrObj.url || !qrObj.login || !qrObj.jeton) {
+      console.log('[login-qr] incomplete qr', qrObj);
       return res.status(400).json({ 
-        error: 'QR Code incomplet - il manque url, login ou jeton',
-        details: 'Dans Pronote, génère le QR Code, puis avec ton téléphone scanne-le et copie le LIEN COMPLET pronote://... qui contient url, login, jeton. Ou sur PC, fais clic droit sur le QR > Inspecter et cherche les données.',
-        receivedPreview: cleanQrData.substring(0,300),
-        help: 'Le QR doit ressembler à: pronote://?url=https://0350774L.index-education.net/pronote/&login=TONLOGIN&jeton=TOKEN123'
+        error: 'QR incomplet',
+        details: `Il manque: ${!qrObj?.url?'url ':''}${!qrObj?.login?'login ':''}${!qrObj?.jeton?'jeton':''}. Colle le LIEN COMPLET pronote://...`,
+        receivedPreview: cleanQrData.substring(0,400),
+        help: 'Format attendu: pronote://?url=https://XXXX.index-education.net/pronote/&login=TONLOGIN&jeton=TOKEN'
       });
     }
 
     const session = pawnote.createSessionHandle();
     const deviceUUID = 'mynote-' + Math.random().toString(36).slice(2) + Date.now().toString(36).slice(2);
     
-    console.log('Attempting pawnote loginQrCode with', {url: qrObj.url, login: qrObj.login, hasJeton: !!qrObj.jeton, pin});
+    console.log('[login-qr] pawnote.loginQrCode', {url: qrObj.url, login: qrObj.login, pin: pin||'(vide)', deviceUUID});
     
-    // Pawnote attend un objet qr avec url, login, jeton
     await pawnote.loginQrCode(session, {
-      qr: {
-        url: qrObj.url,
-        login: qrObj.login,
-        jeton: qrObj.jeton
-      },
+      qr: { url: qrObj.url, login: qrObj.login, jeton: qrObj.jeton },
       pin: pin || '',
       deviceUUID,
       navigatorIdentifier: 'MyNote/1.0'
     });
 
-    console.log('Pawnote login success, user:', session.user?.name);
+    console.log('[login-qr] success user:', session.user?.name);
 
-    // Récupère les vraies données
     const [timetable, grades, homeworks] = await Promise.all([
       pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>{console.log('timetable error', e.message); return {error:e.message, classes:[]}}),
       pawnote.gradesOverview(session).catch(e=>{console.log('grades error', e.message); return {error:e.message}}),
       pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>{console.log('homeworks error', e.message); return []})
     ]);
 
+    lastSuccess = { time: new Date().toISOString(), method: 'qr', user: session.user?.name, url: qrObj.url };
+
     res.json({
       success: true,
       user: { name: session.user?.name, class: session.user?.studentClass?.name, id: session.user?.id },
       instance: { url: qrObj.url },
-      timetable,
-      grades,
-      homeworks,
-      message: '✅ Connecté via QR Code - Données réelles récupérées'
+      timetable, grades, homeworks
     });
 
   } catch (err) {
-    console.error('QR login error full', err);
-    let friendlyError = err.message;
-    if (err.message.includes('BadCredentials')) friendlyError = 'QR Code ou PIN incorrect - le QR a expiré (10 min) ou le PIN est faux. Génère un nouveau QR dans Pronote.';
-    if (err.message.includes('PageUnavailable')) friendlyError = 'Page Pronote non trouvée - Vérifie ton URL Pronote (ex: https://0350774L.index-education.net/pronote/)';
-    if (err.message.includes('AccessDenied')) friendlyError = 'Accès refusé - Ton compte n\'a pas accès à cette partie ou le QR a expiré';
+    console.error('[login-qr] error', err);
+    lastError = { time: new Date().toISOString(), endpoint: 'login-qr', pin, qrPreview: qrData.substring(0,200), error: err.message, name: err.name, stack: err.stack?.substring(0,1500) };
+    let friendly = err.message;
+    if (err.name==='BadCredentialsError' || err.message.includes('BadCredentials')) friendly = 'QR ou PIN incorrect - Le QR expire après 10 min ! Génère un NOUVEAU QR dans Pronote > Infos perso > Compte > QR Code et réessaie IMMÉDIATEMENT avec le bon PIN à 4 chiffres.';
+    if (err.name==='PageUnavailableError') friendly = `Page Pronote non trouvée (${err.message}). Ton collège bloque peut-être les serveurs Render. Essaie le login direct avec identifiants Pronote (si ton collège te les a donnés) ou contacte-moi avec ton URL exacte.`;
+    if (err.name==='AccessDeniedError') friendly = 'Accès refusé';
     
-    res.status(500).json({ 
-      error: friendlyError, 
-      originalError: err.message,
-      name: err.name,
-      help: 'Génère un NOUVEAU QR Code dans Pronote (il expire après 10 min) et réessaie immédiatement avec le bon PIN à 4 chiffres.'
-    });
+    res.status(500).json({ error: friendly, originalError: err.message, name: err.name });
   }
 });
 
-// Endpoint pour tester URL Pronote
-app.get('/api/test-pronote', async (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'url manquant' });
-  try {
-    const clean = pawnote.cleanURL(url);
-    const instance = await pawnote.instance(clean);
-    res.json({ success: true, cleanUrl: clean, instance: { name: instance.name, version: instance.version, hasCAS: !!instance.casURL, casURL: instance.casURL } });
-  } catch(e){
-    res.status(500).json({ error: e.message, name: e.name });
-  }
-});
-
-// Try to get data from current proxy session cookies (if user logged via browser)
-app.get('/api/session-data', async (req, res) => {
-  const sid = req.cookies.mynote_sid;
-  if (!sid || !jars.has(sid)) return res.json({ error: 'Pas de session Toutatice active. Connecte-toi via le navigateur.' });
-  
+// Old proxy routes kept for compatibility
+app.get('/auth/start', async (req,res)=>{
+  const sid = getSid(req,res);
+  const pronoteUrl = req.query.pronoteUrl || req.query.url || 'https://www.toutatice.fr';
+  const returnTo = req.query.returnTo || '/';
   const jar = jars.get(sid);
-  const cookies = jar['global'] || {};
-  
-  // Check if we have Pronote cookies
-  const hasPronoteCookie = Object.keys(cookies).some(k=>k.toLowerCase().includes('pronote') || k.toLowerCase().includes('applimobile') || k.toLowerCase().includes('validation'));
-  
-  res.json({
-    hasSession: true,
-    cookiesCount: Object.keys(cookies).length,
-    hasPronoteCookie,
-    cookiesPreview: Object.keys(cookies).slice(0,10),
-    message: hasPronoteCookie ? 'Session Pronote détectée ! On peut tenter extraction.' : 'Session Toutatice active mais pas encore de session Pronote. Va sur Pronote via le navigateur.'
-  });
-});
-
-// --- NOUVEAU FLUX LIEN EDUCONNECT -> MYNOTE (sans iframe) ---
-const authStates = new Map();
-
-app.get('/auth/start', (req, res) => {
-  const { pronoteUrl, redirect_uri } = req.query;
-  if (!pronoteUrl) return res.status(400).send('pronoteUrl manquant');
-  
-  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const finalRedirect = redirect_uri || `${req.protocol}://${req.get('host')}/auth/callback`;
-  
-  authStates.set(state, {
-    pronoteUrl,
-    redirect_uri: finalRedirect,
-    createdAt: Date.now(),
-    sid: req.cookies.mynote_sid
-  });
-
-  // NOUVEAU: Retour automatique via proxy avec autoReturn=1 + pronoteUrl pour bouton direct
-  const toutaticeLogin = `https://www.toutatice.fr/cas/login?service=${encodeURIComponent(pronoteUrl)}`;
-  const proxiedWithAutoReturn = `/browse?url=${encodeURIComponent(toutaticeLogin)}&autoReturn=1&pronoteUrl=${encodeURIComponent(pronoteUrl)}&state=${state}`;
-  
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>MyNote → EduConnect</title>
-    <style>body{font-family:Inter,sans-serif;background:#0B1224;color:white;padding:40px;max-width:600px;margin:auto}
-    .card{background:#151E35;border:1px solid #233154;border-radius:20px;padding:24px;margin:20px 0}
-    .btn{display:block;width:100%;height:52px;background:#6C7CFF;color:white;border-radius:12px;text-align:center;line-height:52px;font-weight:600;text-decoration:none;margin:12px 0}
-    </style></head>
-    <body>
-      <h1>🔗 MyNote → Toutatice → EduConnect</h1>
-      <div class="card" style="border-color:#2ECC71;background:rgba(46,204,113,0.1)">
-        <b>✅ Retour automatique activé !</b><br><br>
-        MyNote va t'envoyer vers Toutatice → EduConnect, et te ramener <b>automatiquement</b> avec ta session, sans bookmarklet.
-      </div>
-      <div class="card">
-        <b>Parcours :</b><br>
-        1. MyNote (lien) → Toutatice<br>
-        2. Toutatice → EduConnect<br>
-        3. Login<br>
-        4. Retour Toutatice → Pronote<br>
-        5. <b style="color:#2ECC71">Pronote détecté → Retour auto vers MyNote</b>
-      </div>
-      <a class="btn" href="${proxiedWithAutoReturn}">🔗 Continuer vers Toutatice → EduConnect (retour auto)</a>
-      <p><a href="/" style="color:#6C7CFF">← Retour MyNote</a></p>
-      <script>setTimeout(()=>{ window.location.href = "${proxiedWithAutoReturn}"; }, 800);</script>
-    </body>
-    </html>
-  `);
-});
-
-app.get('/auth/callback', (req, res) => {
-  const { state, data, ticket, realUrl } = req.query;
-  if (ticket) {
-    return res.send(`<html><body style="background:#0B1224;color:white;font-family:Inter;padding:40px"><h1>Ticket CAS: ${ticket}</h1><p>Toutatice refuse normalement mynote comme service, donc ce cas n'arrive pas.</p><a href="/" style="color:#6C7CFF">Retour</a></body></html>`);
+  try {
+    const target = pronoteUrl;
+    const cookies = getCookiesForUrl(jar, target);
+    const r = await fetch(target, { headers: { 'Cookie': cookies, 'User-Agent': 'Mozilla/5.0' }, redirect: 'manual' });
+    const setCookies = r.headers.getSetCookie ? r.headers.getSetCookie() : r.headers.get('set-cookie');
+    if (setCookies) storeCookies(jar, target, setCookies);
+    res.redirect(`/browse?url=${encodeURIComponent(target)}&returnTo=${encodeURIComponent(returnTo)}`);
+  } catch(e){
+    res.status(500).send('Erreur auth/start: '+e.message);
   }
-  if (data) {
-    try {
-      const jsonStr = decodeURIComponent(escape(atob(data)));
-      const parsed = JSON.parse(jsonStr);
-      const sid = getSid(req, res);
-      const jar = jars.get(sid);
-      if (!jar['mynote_real']) jar['mynote_real'] = {};
-      jar['mynote_real'] = { url: parsed.url || realUrl, capturedAt: Date.now(), state };
-      return res.redirect(`/?real=1&state=${state}&realUrl=${encodeURIComponent(realUrl||parsed.url||'')}`);
-    } catch (e) {
-      return res.send(`<html><body style="background:#0B1224;color:white;padding:40px"><h1>Erreur</h1><pre>${e.message}</pre><a href="/">Retour</a></body></html>`);
+});
+
+app.get('/browse', async (req,res)=>{
+  const sid = getSid(req,res);
+  const targetUrl = req.query.url;
+  const returnTo = req.query.returnTo || '/';
+  if (!targetUrl) return res.status(400).send('url manquant');
+  const jar = jars.get(sid);
+  try {
+    const cookies = getCookiesForUrl(jar, targetUrl);
+    const r = await fetch(targetUrl, { headers: { 'Cookie': cookies, 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' }, redirect: 'manual' });
+    const setCookies = r.headers.getSetCookie ? r.headers.getSetCookie() : r.headers.get('set-cookie');
+    if (setCookies) storeCookies(jar, targetUrl, setCookies);
+    if (r.status>=300 && r.status<400) {
+      const loc = r.headers.get('location');
+      if (loc) {
+        const next = new URL(loc, targetUrl).toString();
+        if (next.includes('eleve.html') || next.includes('pronote')) {
+          return res.redirect('/?real=1&auto=1&fromPronote=1&realUrl='+encodeURIComponent(next));
+        }
+        return res.redirect(`/browse?url=${encodeURIComponent(next)}&returnTo=${encodeURIComponent(returnTo)}`);
+      }
     }
+    const html = await r.text();
+    const $ = cheerio.load(html);
+    $('head').prepend(`<base href="${targetUrl}">`);
+    $('a').each((i,el)=>{
+      const href = $(el).attr('href');
+      if (href && !href.startsWith('javascript:') && !href.startsWith('#') && !href.startsWith('mailto:')) {
+        try {
+          const abs = new URL(href, targetUrl).toString();
+          $(el).attr('href', `/browse?url=${encodeURIComponent(abs)}&returnTo=${encodeURIComponent(returnTo)}`);
+        } catch {}
+      }
+    });
+    $('form').each((i,el)=>{
+      const action = $(el).attr('action') || targetUrl;
+      try {
+        const abs = new URL(action, targetUrl).toString();
+        $(el).attr('action', `/browse-proxy?url=${encodeURIComponent(abs)}`);
+        $(el).append(`<input type="hidden" name="_mynote_returnTo" value="${returnTo}"><input type="hidden" name="_mynote_originalUrl" value="${abs}">`);
+      } catch {}
+    });
+    const inject = `<div style="position:fixed;top:0;left:0;right:0;z-index:999999;background:#6C7CFF;color:white;padding:10px;text-align:center;font-family:Inter;font-size:13px">MyNote Proxy - ${targetUrl} <a href="${returnTo}" style="color:white;text-decoration:underline;margin-left:10px">Retour MyNote</a></div><style>body{padding-top:40px !important}</style>`;
+    $('body').prepend(inject);
+    res.send($.html());
+  } catch(e){
+    res.status(500).send('Erreur browse: '+e.message+'<br><a href="/">Retour</a>');
   }
-  res.redirect('/?real=1');
 });
 
-// Clear
-app.get('/api/clear', (req,res)=>{
+app.all('/browse-proxy', async (req,res)=>{
+  const sid = getSid(req,res);
+  const targetUrl = req.query.url || req.body._mynote_originalUrl;
+  const returnTo = req.body._mynote_returnTo || req.query.returnTo || '/';
+  if (!targetUrl) return res.status(400).send('url manquant');
+  const jar = jars.get(sid);
+  try {
+    const cookies = getCookiesForUrl(jar, targetUrl);
+    const opts = { method: req.method, headers: { 'Cookie': cookies, 'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/x-www-form-urlencoded' }, redirect: 'manual' };
+    if (req.method==='POST') {
+      const body = new URLSearchParams(req.body);
+      body.delete('_mynote_returnTo'); body.delete('_mynote_originalUrl');
+      opts.body = body.toString();
+    }
+    const r = await fetch(targetUrl, opts);
+    const setCookies = r.headers.getSetCookie ? r.headers.getSetCookie() : r.headers.get('set-cookie');
+    if (setCookies) storeCookies(jar, targetUrl, setCookies);
+    if (r.status>=300 && r.status<400) {
+      const loc = r.headers.get('location');
+      if (loc) {
+        const next = new URL(loc, targetUrl).toString();
+        if (next.includes('eleve.html')) return res.redirect('/?real=1&auto=1&fromPronote=1&realUrl='+encodeURIComponent(next));
+        return res.redirect(`/browse?url=${encodeURIComponent(next)}&returnTo=${encodeURIComponent(returnTo)}`);
+      }
+    }
+    const html = await r.text();
+    if (html.includes('eleve.html') || targetUrl.includes('eleve.html')) {
+      return res.redirect('/?real=1&auto=1&fromPronote=1&realUrl='+encodeURIComponent(targetUrl));
+    }
+    res.send(html);
+  } catch(e){
+    res.status(500).send('Erreur proxy: '+e.message);
+  }
+});
+
+app.get('/api/session-data', (req,res)=>{
   const sid = req.cookies.mynote_sid;
-  if (sid) jars.delete(sid);
-  res.clearCookie('mynote_sid');
-  res.json({ ok:true });
+  const jar = jars.get(sid);
+  if (!jar) return res.json({connected:false});
+  res.json({connected:true, cookies: Object.keys(jar).length});
 });
 
-app.get('/api/health', (req,res)=>res.json({ ok:true, jars: jars.size, pawnote: true, flow: 'link-educonnect' }));
-
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, '0.0.0.0', ()=>{
-  console.log(`MyNote Proxy + Pawnote running on http://0.0.0.0:${PORT}`);
-});
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', ()=>console.log('MyNote server listening on', PORT));
