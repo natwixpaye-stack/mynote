@@ -392,8 +392,90 @@ app.post('/api/login-pronote', async (req, res) => {
     res.status(500).json({ 
       error: err.message, 
       name: err.name,
-      details: 'Vérifie ton URL Pronote et tes identifiants. Pour Toutatice/EduConnect, utilise le navigateur intégré car Pawnote ne gère pas directement EduConnect (il faut passer par CAS).'
+      details: 'Vérifie ton URL Pronote et tes identifiants. Pour Toutatice/EduConnect, utilise le QR Code.'
     });
+  }
+});
+
+// QR Code login - méthode officielle Pronote
+app.post('/api/login-qr', async (req, res) => {
+  const { qrData, pin } = req.body;
+  if (!qrData) return res.status(400).json({ error: 'qrData manquant - colle le contenu du QR Code Pronote' });
+  
+  try {
+    // qrData peut être une URL pronote:// ou un JSON
+    let qr;
+    try {
+      // Si c'est déjà un objet
+      qr = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
+    } catch {
+      // Si c'est une URL pronote:// avec params
+      // Format: pronote://?url=...&login=...&jeton=...
+      if (qrData.startsWith('pronote://')) {
+        const urlObj = new URL(qrData);
+        qr = {
+          url: urlObj.searchParams.get('url'),
+          login: urlObj.searchParams.get('login'),
+          jeton: urlObj.searchParams.get('jeton')
+        };
+      } else {
+        // Essaie de parser comme base64 ou autre
+        qr = { data: qrData };
+      }
+    }
+
+    const session = pawnote.createSessionHandle();
+    
+    // Pour Pawnote, il faut le QR + PIN
+    // Le PIN est les 4 chiffres affichés avec le QR
+    const deviceUUID = 'mynote-' + Math.random().toString(36).slice(2);
+    
+    let loginResult;
+    if (qr.url && qr.login && qr.jeton) {
+      // Format QR code direct
+      loginResult = await pawnote.loginQrCode(session, {
+        qr: {
+          url: qr.url,
+          login: qr.login,
+          jeton: qr.jeton
+        },
+        pin: pin || '',
+        deviceUUID,
+        navigatorIdentifier: 'MyNote/1.0'
+      });
+    } else if (qrData.includes('pronote://')) {
+      // Essaie avec la string brute
+      // Pawnote attend un objet avec url, login, jeton - on tente de le décoder
+      return res.status(400).json({ 
+        error: 'Format QR non reconnu', 
+        details: 'Dans Pronote, va dans Informations personnelles > Compte > QR Code, clique sur le QR pour voir le texte, et colle TOUT le texte ici. Il doit contenir url, login, jeton.',
+        received: qrData.substring(0,200)
+      });
+    } else {
+      return res.status(400).json({ error: 'QR invalide', details: 'Colle le contenu complet du QR Code' });
+    }
+
+    // Récupère les vraies données
+    const [timetable, grades, homeworks, absences] = await Promise.all([
+      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>({error:e.message, classes:[]})),
+      pawnote.gradesOverview(session).catch(e=>({error:e.message})),
+      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>[]),
+      pawnote.notebook(session, { startDate: new Date(Date.now()-30*24*60*60*1000), endDate: new Date() }).catch(e=>null)
+    ]);
+
+    res.json({
+      success: true,
+      user: session.user,
+      timetable,
+      grades,
+      homeworks,
+      absences,
+      message: '✅ Connecté via QR Code officiel Pronote - Données réelles'
+    });
+
+  } catch (err) {
+    console.error('QR login error', err);
+    res.status(500).json({ error: err.message, name: err.name, stack: err.stack?.substring(0,500) });
   }
 });
 
