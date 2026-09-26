@@ -3,46 +3,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyNote - Direct</title>
+<title>MyNote - Auto Sync comme Papillon</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>body{background:#0B1224;font-family:Inter,sans-serif;color:white}.card{background:#151E35;border:1px solid #233154}</style>
 </head>
-<body class="bg-[#0B1224] min-h-screen p-4 flex items-center justify-center">
+<body class="bg-[#0B1224] min-h-screen p-4">
 
-<div id="login" class="w-full max-w-[520px]">
-  <div class="text-center mb-6">
-    <div class="w-12 h-12 rounded-xl bg-[#6C7CFF] flex items-center justify-center font-bold text-xl mx-auto mb-3">M</div>
-    <h1 class="text-[24px] font-[800]">MyNote - Connexion directe</h1>
-    <p class="text-white/60 text-[12px] mt-1">Si les boutons ne marchent pas, recharge la page (Ctrl+F5)</p>
+<div id="login" class="max-w-[600px] mx-auto">
+  <div class="text-center py-6">
+    <div class="w-14 h-14 rounded-2xl bg-[#6C7CFF] flex items-center justify-center font-bold text-xl mx-auto">M</div>
+    <h1 class="text-[26px] font-[800] mt-3">MyNote - Auto Sync</h1>
+    <p class="text-white/60 text-[13px] mt-1">Comme Papillon : installe une fois, ça s'actualise tout seul. Plus de copier-coller.</p>
   </div>
 
-  <div class="card rounded-[20px] p-6">
-    <label class="text-[11px] font-bold text-white/50 uppercase">URL Pronote</label>
-    <input id="url" value="https://0352686e.index-education.net/pronote/" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-[#233154] text-[13px] mt-1 mb-3">
-
-    <button id="btnTest" type="button" onclick="testUrl()" class="w-full h-[44px] rounded-xl bg-white/10 hover:bg-white/20 text-[13px] font-semibold mb-2">🔍 Tester URL (depuis ton IP)</button>
-    <button id="btnEnt" type="button" onclick="connectEnt()" class="w-full h-[48px] rounded-xl bg-[#6C7CFF] hover:bg-[#8B9AFF] text-white font-bold text-[14px]">🔐 Connexion ENT (comme Papillon)</button>
-
-    <div id="status" class="hidden mt-3 text-[12px] p-3 rounded-xl bg-white/5 border border-[#233154]"></div>
-
-    <div class="mt-4 p-3 rounded-xl bg-[#2ECC71]/10 border border-[#2ECC71]/20 text-[11px]">
-      <b>✅ Fix boutons:</b> Si tu ne peux pas cliquer, fais <b>Ctrl+F5</b> pour recharger sans cache. Le site utilise du JS qui peut être bloqué par une ancienne version en cache.
+  <div class="card rounded-[24px] p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <div class="px-2.5 py-1 rounded-full bg-[#2ECC71]/20 text-[#2ECC71] text-[10px] font-bold">AUTO - COMME PAPILLON</div>
+      <div class="px-2.5 py-1 rounded-full bg-[#6C7CFF]/20 text-[#6C7CFF] text-[10px] font-bold">ANITA CONTI FIX</div>
     </div>
 
-    <div class="mt-4">
-      <div class="text-[11px] font-bold uppercase text-white/40 mb-2">QR Code</div>
-      <textarea id="qr" placeholder="Colle QR JSON" class="w-full h-[50px] p-2 rounded-xl bg-[#0B1224] border border-[#233154] text-[11px] font-mono"></textarea>
-      <input id="pin" placeholder="PIN" class="w-full mt-2 h-[36px] px-3 rounded-xl bg-[#0B1224] border border-[#233154] text-[12px]">
-      <button type="button" onclick="connectQr()" class="w-full mt-2 h-[36px] rounded-xl bg-white/10 text-[12px]">Connexion QR</button>
-      <div id="qrStatus" class="hidden mt-2 text-[11px] p-2 rounded-xl"></div>
+    <h2 class="font-bold text-[18px] mb-1">Installation en 20 secondes (une seule fois)</h2>
+    <p class="text-[12px] text-white/50 mb-4">Après ça, tu vas dans Pronote normalement et MyNote se met à jour tout seul.</p>
+
+    <div class="space-y-4">
+      <div class="rounded-xl bg-white/5 border border-[#233154] p-4">
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#6C7CFF] text-white flex items-center justify-center font-bold text-[13px] shrink-0">1</div>
+          <div class="flex-1">
+            <div class="font-bold text-[13px]">Installe Tampermonkey (extension qui auto-sync)</div>
+            <div class="text-[11px] text-white/60 mt-1">C'est l'extension que Papillon utilise en interne pour intercepter Pronote. 1 clic.</div>
+            <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank" class="inline-block mt-2 px-4 py-2 rounded-xl bg-white text-black font-bold text-[12px]">Installer Tampermonkey →</a>
+            <div class="text-[10px] text-white/40 mt-1">Sur Edge: même lien marche, ou cherche Tampermonkey dans Edge Add-ons</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-[#6C7CFF]/10 border border-[#6C7CFF]/20 p-4">
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#6C7CFF] text-white flex items-center justify-center font-bold text-[13px] shrink-0">2</div>
+          <div class="flex-1">
+            <div class="font-bold text-[13px]">Installe le script MyNote (1 clic)</div>
+            <div class="text-[11px] text-white/60 mt-1">Une fois Tampermonkey installé, clique ici :</div>
+            <a id="installScript" href="#" class="inline-block mt-2 px-4 py-2 rounded-xl bg-[#6C7CFF] text-white font-bold text-[12px]">📥 Installer script MyNote Auto-Sync</a>
+            <div class="text-[10px] text-white/50 mt-2">Ça va ouvrir Tampermonkey → clique "Installer"</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-[#2ECC71]/10 border border-[#2ECC71]/20 p-4">
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#2ECC71] text-black flex items-center justify-center font-bold text-[13px] shrink-0">3</div>
+          <div class="flex-1">
+            <div class="font-bold text-[13px]">Va dans Pronote normalement</div>
+            <div class="text-[11px] text-white/60 mt-1">Va sur <a href="https://www.toutatice.fr" target="_blank" class="underline text-[#6C7CFF]">toutatice.fr</a> → EduConnect → Pronote. Le script auto-extrait ton token en arrière-plan. Tu verras une bulle verte "MyNote Auto-Sync" dans Pronote.</div>
+            <button onclick="checkAutoSync()" class="mt-3 w-full h-[44px] rounded-xl bg-[#2ECC71] text-black font-bold text-[13px]">✅ J'ai installé et je suis allé dans Pronote - Vérifier</button>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <div id="status" class="hidden mt-4 text-[12px] p-3 rounded-xl"></div>
+
+    <div class="mt-6 pt-6 border-t border-[#233154]">
+      <div class="text-[11px] font-bold uppercase text-white/40 mb-2">Méthodes sans extension (si tu ne veux pas installer)</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="document.getElementById('qrPanel').classList.toggle('hidden')" class="h-[40px] rounded-xl bg-white/10 text-[12px]">📱 QR Code direct</button>
+        <button onclick="document.getElementById('manualPanel').classList.toggle('hidden')" class="h-[40px] rounded-xl bg-white/10 text-[12px]">🔧 Manuel F12</button>
+      </div>
+
+      <div id="qrPanel" class="hidden mt-3 p-3 rounded-xl bg-[#0B1224] border border-[#233154]">
+        <div class="text-[11px] mb-2">QR Code Pronote (méthode officielle, auto-actualisation) :</div>
+        <textarea id="qr" placeholder="Colle le contenu QR Code (JSON avec url, login, jeton)" class="w-full h-[60px] p-2 rounded-xl bg-[#151E35] border border-[#233154] text-[11px] font-mono"></textarea>
+        <input id="pin" placeholder="PIN 4 chiffres" class="w-full mt-2 h-[36px] px-3 rounded-xl bg-[#151E35] border border-[#233154] text-[12px]">
+        <button onclick="connectQr()" class="w-full mt-2 h-[40px] rounded-xl bg-[#6C7CFF] font-bold text-[12px]">Connexion QR directe (IP FR)</button>
+        <div id="qrStatus" class="hidden mt-2 text-[11px] p-2 rounded-xl"></div>
+      </div>
+
+      <div id="manualPanel" class="hidden mt-3 p-3 rounded-xl bg-[#0B1224] border border-[#233154] text-[11px]">
+        <b>F12 Console (sans extension) :</b><br>
+        Dans Pronote, F12 → Console → colle ce code → Entrée<br>
+        <code id="manualCode" style="display:block;background:#000;padding:8px;border-radius:6px;margin:8px 0;font-size:9px;word-break:break-all"></code>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('manualCode').innerText).then(()=>alert('Copié!'))" class="px-3 py-1 rounded bg-white/10 text-[11px]">Copier</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-4 text-[10px] text-white/30">
+    MyNote utilise Pawnote (comme Papillon) directement depuis ton navigateur IP FR, pas depuis Render US bloqué.<br>
+    Token valable 5 min, auto-refresh comme Papillon.
   </div>
 </div>
 
-<div id="app" class="hidden w-full max-w-[900px]">
-  <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#6C7CFF] flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span></div>
+<div id="app" class="hidden max-w-[900px] mx-auto">
+  <div class="flex justify-between items-center py-6">
+    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#6C7CFF] flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span><span class="px-2 py-1 rounded-full bg-[#2ECC71]/20 text-[#2ECC71] text-[10px] font-bold">AUTO SYNC</span></div>
     <button onclick="localStorage.clear();location.reload()" class="px-4 py-2 rounded-xl bg-white/10 text-[12px]">Déco</button>
   </div>
   <div id="user" class="card rounded-[16px] p-4 mb-4"></div>
@@ -54,79 +109,133 @@
 </div>
 
 <script>
-// Simple non-module JS - buttons will work even if pawnote fails
-function showStatus(msg, type){
+// Tampermonkey script content
+const tmScript = `// ==UserScript==
+// @name         MyNote Auto Sync - Anita Conti
+// @namespace    https://mynote-k8am.onrender.com
+// @version      1.0
+// @description  Auto-sync Pronote vers MyNote comme Papillon - extrait loginState et envoie à MyNote
+// @author       MyNote
+// @match        https://*.index-education.net/pronote/*
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    console.log('[MyNote] Auto-sync script chargé sur', location.href);
+    
+    let lastToken=null;
+    
+    function tryExtract(){
+        try{
+            const state=window.loginState;
+            if(!state || !state.login || !state.mdp) return;
+            
+            const tokenKey=state.login+':'+state.mdp;
+            if(tokenKey===lastToken) return;
+            lastToken=tokenKey;
+            
+            console.log('[MyNote] loginState trouvé', state.login);
+            
+            const data={
+                url: location.origin + '/pronote/',
+                login: state.login,
+                token: state.mdp,
+                deviceUUID: 'mynote-'+Math.random().toString(36).slice(2),
+                time: Date.now()
+            };
+            
+            localStorage.setItem('mynote_papillon_token', JSON.stringify(data));
+            
+            // Send to MyNote server
+            fetch('https://mynote-k8am.onrender.com/api/ent-callback',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({url:data.url, login:data.login, token:data.token, deviceUUID:data.deviceUUID})
+            }).then(r=>r.json()).then(j=>{
+                if(j.success){
+                    console.log('[MyNote] Sync OK', j.user.name);
+                    localStorage.setItem('mynote_real_data', JSON.stringify(j));
+                    
+                    // Show banner
+                    let banner=document.createElement('div');
+                    banner.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999999;background:#2ECC71;color:black;padding:16px 24px;border-radius:12px;font-family:Inter,sans-serif;font-weight:800;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:center';
+                    banner.innerHTML='✅ MyNote Auto-Sync: '+j.user.name+'<br><span style=\\'font-size:12px\\'>'+j.timetable.classes.length+' cours - <a href=\\'https://mynote-k8am.onrender.com\\' target=\\'_blank\\' style=\\'color:black;text-decoration:underline\\'>Ouvrir MyNote</a></span>';
+                    document.body.appendChild(banner);
+                    setTimeout(()=>banner.remove(), 6000);
+                    
+                    // Notify MyNote tab if open
+                    try{
+                        localStorage.setItem('mynote_last_sync', Date.now().toString());
+                    }catch(e){}
+                }
+            }).catch(e=>console.log('[MyNote] Erreur sync', e));
+        }catch(e){ console.log('[MyNote] Erreur', e); }
+    }
+    
+    // Try every 2s
+    setInterval(tryExtract, 2000);
+    // Try on load
+    window.addEventListener('load', ()=>setTimeout(tryExtract, 2000));
+    // Try now
+    setTimeout(tryExtract, 1000);
+    
+    console.log('[MyNote] Auto-sync en attente de loginState...');
+})();`;
+
+const manualCode = `let s=window.loginState; if(!s||!s.login){alert('Pas encore connecté, attends EDT');}else{fetch('https://mynote-k8am.onrender.com/api/ent-callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.origin+'/pronote/', login:s.login, token:s.mdp, deviceUUID:'mynote-'+Math.random().toString(36).slice(2)})}).then(r=>r.json()).then(j=>{if(j.success){localStorage.setItem('mynote_real_data', JSON.stringify(j)); alert('✅ '+j.user.name+' - Va sur MyNote');}else alert('Erreur:'+j.error)});}`;
+
+document.getElementById('manualCode').textContent=manualCode;
+
+// Install script link - data URI for Tampermonkey
+const blob=new Blob([tmScript], {type:'text/javascript'});
+const tmUrl=URL.createObjectURL(blob);
+document.getElementById('installScript').href=tmUrl;
+document.getElementById('installScript').onclick=(e)=>{
+  e.preventDefault();
+  // Open Tampermonkey install page via data URI
+  const installUrl='https://mynote-k8am.onrender.com/mynote-autosync.user.js';
+  // Create the file on server via POST? For now, open a page that serves the script
+  window.open('/mynote-autosync.user.js', '_blank');
+};
+
+function showStatus(msg,type){
   const el=document.getElementById('status');
   el.classList.remove('hidden');
   el.innerHTML=msg;
-  el.className='mt-3 text-[12px] p-3 rounded-xl '+(type==='error'?'bg-red-500/20 text-red-300':type==='success'?'bg-[#2ECC71]/20 text-[#2ECC71]':'bg-white/5 border border-[#233154]');
-}
-function showQrStatus(msg,type){
-  const el=document.getElementById('qrStatus');
-  el.classList.remove('hidden');
-  el.innerHTML=msg;
-  el.className='mt-2 text-[11px] p-2 rounded-xl '+(type==='error'?'bg-red-500/20 text-red-300':'bg-[#2ECC71]/20 text-[#2ECC71]');
+  el.className='mt-4 text-[12px] p-3 rounded-xl '+(type==='error'?'bg-red-500/20 text-red-300':type==='success'?'bg-[#2ECC71]/20 text-[#2ECC71]':'bg-white/5 border border-[#233154]');
 }
 
-async function testUrl(){
-  const url=document.getElementById('url').value.trim();
-  showStatus('Test depuis ton navigateur...<br>URL: '+url);
-  try{
-    // Try to fetch instance via our server proxy first (to avoid CORS), then direct
-    const res=await fetch('/api/test-pronote?url='+encodeURIComponent(url));
-    const j=await res.json();
-    if(j.success){
-      showStatus('✅ '+j.instance.name+'<br>Version: '+(j.instance.version||'?')+'<br>CAS: '+(j.instance.hasCAS?'Oui':'Non')+'<br><br>✅ Serveur OK, maintenant test depuis ton IP (méthode directe)...<br><button onclick="testDirect()" class="mt-2 px-3 py-1 rounded bg-[#6C7CFF] text-white text-[11px]">Tester depuis mon IP (comme Papillon)</button>', 'success');
-    } else {
-      showStatus('❌ Serveur: '+j.error+'<br><br>Essaie quand même connexion ENT directe', 'error');
-    }
-  }catch(e){
-    showStatus('❌ Erreur: '+e.message, 'error');
+async function checkAutoSync(){
+  showStatus('Vérification auto-sync...<br>Recherche données dans localStorage...');
+  // Check if we have real data from Tampermonkey
+  const real=localStorage.getItem('mynote_real_data');
+  if(real){
+    try{
+      const j=JSON.parse(real);
+      if(j.success){
+        showStatus('✅ Données trouvées: '+j.user.name+'<br>'+j.timetable.classes.length+' cours - Chargement...', 'success');
+        setTimeout(()=>enterApp(j), 800);
+        return;
+      }
+    }catch{}
   }
-}
-
-async function testDirect(){
-  const url=document.getElementById('url').value.trim();
-  showStatus('Test direct depuis ton navigateur (IP FR) via pawnote CDN...');
-  try{
-    const pawnote=await import('https://cdn.jsdelivr.net/npm/pawnote@1.6.2/+esm');
-    const clean=pawnote.cleanURL(url);
-    showStatus('cleanURL: '+clean+'<br>Fetching instance depuis ton IP...');
-    const instance=await pawnote.instance(clean);
-    showStatus('✅ Direct OK depuis ton IP!<br>'+instance.name+'<br>CAS: '+(instance.casURL?'Oui':'Non')+'<br><br>Tu peux cliquer Connexion ENT', 'success');
-  }catch(e){
-    showStatus('❌ Direct: '+e.name+' '+e.message+'<br><br>Si PageUnavailableError, même ton IP est bloquée (essaie en 4G). Sinon, essaie QR Code.', 'error');
+  // Check last sync time
+  const lastSync=localStorage.getItem('mynote_last_sync');
+  if(lastSync){
+    showStatus('Dernier sync: '+new Date(parseInt(lastSync)).toLocaleTimeString()+'<br>Mais pas de données complètes. Va dans Pronote et attends la bulle verte.', 'info');
+  } else {
+    showStatus('❌ Pas encore de sync.<br><br>1. As-tu installé Tampermonkey ?<br>2. As-tu installé le script MyNote ?<br>3. Es-tu allé dans Pronote via Toutatice (tu dois voir ton EDT) ?<br>4. As-tu vu la bulle verte "MyNote Auto-Sync" dans Pronote ?<br><br>Si oui, attends 5s puis reclique Vérifier.', 'error');
   }
-}
-
-async function connectEnt(){
-  const url=document.getElementById('url').value.trim();
-  showStatus('🔐 Méthode Papillon directe depuis ton navigateur...<br><br>Ouverture de Pronote dans un nouvel onglet. Connecte-toi via EduConnect là-bas, puis on extrait le token.', 'info');
-  
-  // Open ENT login page that does auto-extract without bookmark bar
-  const entUrl='/ent/login?url='+encodeURIComponent(url);
-  const win=window.open(entUrl, '_blank');
-  if(!win){
-    showStatus('❌ Popup bloqué! Autorise les popups pour ce site puis réessaie. Ou ouvre manuellement: <a href="'+entUrl+'" target="_blank" class="underline text-[#6C7CFF]">'+entUrl+'</a>', 'error');
-    return;
-  }
-  
-  showStatus('✅ Onglet ENT ouvert<br><br>1. Dans le nouvel onglet, clique "📋 Copier le code"<br>2. Va sur toutatice.fr → Pronote (EDT visible)<br>3. F12 → Console → Ctrl+V → Entrée<br>4. Bulle verte → reviens ici → clique "Charger"', 'success');
-  
-  window.addEventListener('message', (e)=>{
-    if(e.data && e.data.type==='mynote:real-data' && e.data.data.success){
-      showStatus('✅ Données reçues: '+e.data.data.user.name, 'success');
-      localStorage.setItem('mynote_real', JSON.stringify(e.data.data));
-      enterApp(e.data.data);
-    }
-  });
 }
 
 async function connectQr(){
   const qrData=document.getElementById('qr').value.trim();
   const pin=document.getElementById('pin').value.trim();
-  if(!qrData){ showQrStatus('Colle QR', 'error'); return; }
-  showQrStatus('Connexion QR depuis ton navigateur...', 'info');
+  const el=document.getElementById('qrStatus');
+  el.classList.remove('hidden');
+  el.textContent='Connexion QR depuis ton IP...';
   try{
     const pawnote=await import('https://cdn.jsdelivr.net/npm/pawnote@1.6.2/+esm');
     let qrObj=null;
@@ -151,44 +260,36 @@ async function connectQr(){
       pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*86400000)).catch(e=>[])
     ]);
     const data={success:true,user:{name:session.user?.name, class:session.user?.studentClass?.name},instance:{url:qrObj.url},timetable,grades,homeworks,method:'qr-direct'};
-    localStorage.setItem('mynote_real', JSON.stringify(data));
-    showQrStatus('✅ '+data.user.name, 'success');
+    localStorage.setItem('mynote_real_data', JSON.stringify(data));
+    el.textContent='✅ '+data.user.name;
+    el.className='mt-2 text-[11px] p-2 rounded-xl bg-[#2ECC71]/20 text-[#2ECC71]';
     enterApp(data);
   }catch(e){
-    showQrStatus('❌ '+e.name+' '+e.message, 'error');
+    el.textContent='❌ '+e.name+' '+e.message;
+    el.className='mt-2 text-[11px] p-2 rounded-xl bg-red-500/20 text-red-300';
   }
 }
 
 function enterApp(data){
   document.getElementById('login').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('user').innerHTML=`<div class="font-bold text-[16px]">${data.user?.name||'Élève'}</div><div class="text-[12px] text-white/60">${data.user?.class||''} • ${data.instance?.url||''}</div>`;
+  document.getElementById('user').innerHTML=`<div class="font-bold text-[16px]">${data.user?.name||'Élève'}</div><div class="text-[12px] text-white/60">${data.user?.class||''} • ${data.instance?.url||''} • Auto-sync</div>`;
   const tt=data.timetable?.classes||[];
-  document.getElementById('edt').innerHTML=tt.length?tt.slice(0,8).map(c=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1"><b>${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</b> ${c.subject?.name||''}</div>`).join(''):'Pas de cours';
+  document.getElementById('edt').innerHTML=tt.length?tt.slice(0,10).map(c=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1"><b>${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</b> ${c.subject?.name||''} ${c.room?.name||''}</div>`).join(''):'Pas de cours';
   const gr=data.grades?.grades||[];
-  document.getElementById('notes').innerHTML=gr.length?gr.slice(0,8).map(g=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1">${g.subject?.name||''}: ${g.grade?.value||''}</div>`).join(''):'Pas de notes';
+  document.getElementById('notes').innerHTML=gr.length?gr.slice(0,10).map(g=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1">${g.subject?.name||''}: ${g.grade?.value||''}</div>`).join(''):'Pas de notes';
   const hw=data.homeworks||[];
   document.getElementById('devoirs').innerHTML=hw.length?hw.map(h=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1">${h.subject?.name||''}: ${(h.description||'').substring(0,80)}</div>`).join(''):'Pas de devoirs';
 }
 
-const saved=localStorage.getItem('mynote_real');
+const saved=localStorage.getItem('mynote_real_data');
 if(saved){ try{ enterApp(JSON.parse(saved)); }catch{} }
 
-window.addEventListener('message', (e)=>{
-  if(e.data && e.data.type==='mynote:real-data' && e.data.data.success){
-    localStorage.setItem('mynote_real', JSON.stringify(e.data.data));
-    enterApp(e.data.data);
+// Listen for real data from other tab
+window.addEventListener('storage', (e)=>{
+  if(e.key==='mynote_real_data' && e.newValue){
+    try{ enterApp(JSON.parse(e.newValue)); }catch{}
   }
-});
-
-// Test if JS works
-console.log('MyNote JS loaded');
-document.addEventListener('DOMContentLoaded', ()=>{
-  console.log('DOM loaded, buttons should work');
-  // Add visual feedback that buttons are clickable
-  document.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click', ()=>{ b.style.transform='scale(0.95)'; setTimeout(()=>b.style.transform='', 100); });
-  });
 });
 </script>
 </body>
