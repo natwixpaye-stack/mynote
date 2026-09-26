@@ -397,85 +397,134 @@ app.post('/api/login-pronote', async (req, res) => {
   }
 });
 
-// QR Code login - méthode officielle Pronote
+// QR Code login - méthode officielle Pronote - VERSION CORRIGÉE
 app.post('/api/login-qr', async (req, res) => {
   const { qrData, pin } = req.body;
-  if (!qrData) return res.status(400).json({ error: 'qrData manquant - colle le contenu du QR Code Pronote' });
+  if (!qrData) return res.status(400).json({ error: 'qrData manquant' });
+  
+  console.log('QR login attempt, pin:', pin, 'qr length:', qrData.length, 'qr preview:', qrData.substring(0,100));
   
   try {
-    // qrData peut être une URL pronote:// ou un JSON
-    let qr;
-    try {
-      // Si c'est déjà un objet
-      qr = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
-    } catch {
-      // Si c'est une URL pronote:// avec params
-      // Format: pronote://?url=...&login=...&jeton=...
-      if (qrData.startsWith('pronote://')) {
-        const urlObj = new URL(qrData);
-        qr = {
-          url: urlObj.searchParams.get('url'),
+    let qrObj = null;
+    let cleanQrData = qrData.trim();
+    
+    // Essaie de parser différents formats
+    // Format 1: pronote://?url=...&login=...&jeton=...&pin=...
+    // Format 2: JSON {"url": "...", "login": "...", "jeton": "..."}
+    // Format 3: Base64 ou autre
+    
+    if (cleanQrData.startsWith('pronote://')) {
+      try {
+        const urlObj = new URL(cleanQrData);
+        qrObj = {
+          url: urlObj.searchParams.get('url') || urlObj.searchParams.get('pronote_url'),
           login: urlObj.searchParams.get('login'),
-          jeton: urlObj.searchParams.get('jeton')
+          jeton: urlObj.searchParams.get('jeton') || urlObj.searchParams.get('token')
         };
-      } else {
-        // Essaie de parser comme base64 ou autre
-        qr = { data: qrData };
+        console.log('Parsed pronote:// URL', qrObj);
+      } catch(e) {
+        console.log('Failed to parse pronote:// URL', e.message);
       }
+    }
+    
+    if (!qrObj || !qrObj.url) {
+      try {
+        const parsed = JSON.parse(cleanQrData);
+        if (parsed.url && parsed.login && parsed.jeton) {
+          qrObj = parsed;
+        } else if (parsed.data) {
+          // Parfois c'est nested
+          qrObj = parsed.data;
+        }
+      } catch {}
+    }
+    
+    if (!qrObj || !qrObj.url) {
+      // Essaie de trouver url, login, jeton dans le texte avec regex
+      const urlMatch = cleanQrData.match(/https?:\/\/[^\s&"]+\.index-education\.net\/pronote\/?/);
+      const loginMatch = cleanQrData.match(/"login"\s*:\s*"([^"]+)"|login=([^&\s]+)/);
+      const jetonMatch = cleanQrData.match(/"jeton"\s*:\s*"([^"]+)"|jeton=([^&\s]+)/);
+      
+      if (urlMatch) {
+        qrObj = {
+          url: urlMatch[0],
+          login: loginMatch ? (loginMatch[1]||loginMatch[2]) : null,
+          jeton: jetonMatch ? (jetonMatch[1]||jetonMatch[2]) : null
+        };
+      }
+    }
+    
+    if (!qrObj || !qrObj.url || !qrObj.login || !qrObj.jeton) {
+      return res.status(400).json({ 
+        error: 'QR Code incomplet - il manque url, login ou jeton',
+        details: 'Dans Pronote, génère le QR Code, puis avec ton téléphone scanne-le et copie le LIEN COMPLET pronote://... qui contient url, login, jeton. Ou sur PC, fais clic droit sur le QR > Inspecter et cherche les données.',
+        receivedPreview: cleanQrData.substring(0,300),
+        help: 'Le QR doit ressembler à: pronote://?url=https://0350774L.index-education.net/pronote/&login=TONLOGIN&jeton=TOKEN123'
+      });
     }
 
     const session = pawnote.createSessionHandle();
+    const deviceUUID = 'mynote-' + Math.random().toString(36).slice(2) + Date.now().toString(36).slice(2);
     
-    // Pour Pawnote, il faut le QR + PIN
-    // Le PIN est les 4 chiffres affichés avec le QR
-    const deviceUUID = 'mynote-' + Math.random().toString(36).slice(2);
+    console.log('Attempting pawnote loginQrCode with', {url: qrObj.url, login: qrObj.login, hasJeton: !!qrObj.jeton, pin});
     
-    let loginResult;
-    if (qr.url && qr.login && qr.jeton) {
-      // Format QR code direct
-      loginResult = await pawnote.loginQrCode(session, {
-        qr: {
-          url: qr.url,
-          login: qr.login,
-          jeton: qr.jeton
-        },
-        pin: pin || '',
-        deviceUUID,
-        navigatorIdentifier: 'MyNote/1.0'
-      });
-    } else if (qrData.includes('pronote://')) {
-      // Essaie avec la string brute
-      // Pawnote attend un objet avec url, login, jeton - on tente de le décoder
-      return res.status(400).json({ 
-        error: 'Format QR non reconnu', 
-        details: 'Dans Pronote, va dans Informations personnelles > Compte > QR Code, clique sur le QR pour voir le texte, et colle TOUT le texte ici. Il doit contenir url, login, jeton.',
-        received: qrData.substring(0,200)
-      });
-    } else {
-      return res.status(400).json({ error: 'QR invalide', details: 'Colle le contenu complet du QR Code' });
-    }
+    // Pawnote attend un objet qr avec url, login, jeton
+    await pawnote.loginQrCode(session, {
+      qr: {
+        url: qrObj.url,
+        login: qrObj.login,
+        jeton: qrObj.jeton
+      },
+      pin: pin || '',
+      deviceUUID,
+      navigatorIdentifier: 'MyNote/1.0'
+    });
+
+    console.log('Pawnote login success, user:', session.user?.name);
 
     // Récupère les vraies données
-    const [timetable, grades, homeworks, absences] = await Promise.all([
-      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>({error:e.message, classes:[]})),
-      pawnote.gradesOverview(session).catch(e=>({error:e.message})),
-      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>[]),
-      pawnote.notebook(session, { startDate: new Date(Date.now()-30*24*60*60*1000), endDate: new Date() }).catch(e=>null)
+    const [timetable, grades, homeworks] = await Promise.all([
+      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*24*60*60*1000)).catch(e=>{console.log('timetable error', e.message); return {error:e.message, classes:[]}}),
+      pawnote.gradesOverview(session).catch(e=>{console.log('grades error', e.message); return {error:e.message}}),
+      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*24*60*60*1000)).catch(e=>{console.log('homeworks error', e.message); return []})
     ]);
 
     res.json({
       success: true,
-      user: session.user,
+      user: { name: session.user?.name, class: session.user?.studentClass?.name, id: session.user?.id },
+      instance: { url: qrObj.url },
       timetable,
       grades,
       homeworks,
-      absences,
-      message: '✅ Connecté via QR Code officiel Pronote - Données réelles'
+      message: '✅ Connecté via QR Code - Données réelles récupérées'
     });
 
   } catch (err) {
-    console.error('QR login error', err);
-    res.status(500).json({ error: err.message, name: err.name, stack: err.stack?.substring(0,500) });
+    console.error('QR login error full', err);
+    let friendlyError = err.message;
+    if (err.message.includes('BadCredentials')) friendlyError = 'QR Code ou PIN incorrect - le QR a expiré (10 min) ou le PIN est faux. Génère un nouveau QR dans Pronote.';
+    if (err.message.includes('PageUnavailable')) friendlyError = 'Page Pronote non trouvée - Vérifie ton URL Pronote (ex: https://0350774L.index-education.net/pronote/)';
+    if (err.message.includes('AccessDenied')) friendlyError = 'Accès refusé - Ton compte n\'a pas accès à cette partie ou le QR a expiré';
+    
+    res.status(500).json({ 
+      error: friendlyError, 
+      originalError: err.message,
+      name: err.name,
+      help: 'Génère un NOUVEAU QR Code dans Pronote (il expire après 10 min) et réessaie immédiatement avec le bon PIN à 4 chiffres.'
+    });
+  }
+});
+
+// Endpoint pour tester URL Pronote
+app.get('/api/test-pronote', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url manquant' });
+  try {
+    const clean = pawnote.cleanURL(url);
+    const instance = await pawnote.instance(clean);
+    res.json({ success: true, cleanUrl: clean, instance: { name: instance.name, version: instance.version, hasCAS: !!instance.casURL, casURL: instance.casURL } });
+  } catch(e){
+    res.status(500).json({ error: e.message, name: e.name });
   }
 });
 
