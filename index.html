@@ -46,7 +46,7 @@ tailwind.config = {
           <span class="ml-2 px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-bold tracking-widest">BETA • LIEN OFFICIEL</span>
         </div>
         <h1 class="text-[40px] lg:text-[56px] font-[800] leading-[0.95] tracking-[-0.03em] mb-6">Ton école,<br><span class="text-accent2">enfin claire.</span></h1>
-        <p class="text-[18px] leading-[1.5] text-white/60 max-w-[420px]">L'interface que Pronote aurait dû avoir. Connexion par lien officiel : MyNote → Toutatice → EduConnect → retour MyNote.</p>
+        <p class="text-[18px] leading-[1.5] text-white/60 max-w-[420px]">MyNote reste ouvert, Toutatice s'ouvre à côté. Dès que tu es connecté, MyNote s'actualise tout seul avec tes vraies données.</p>
         
         <div class="mt-10 grid grid-cols-1 gap-3 max-w-[420px]">
           <div class="flex gap-3 p-3 rounded-2xl bg-card border border-border">
@@ -79,7 +79,7 @@ tailwind.config = {
 
             <!-- NOUVEAU FLUX LIEN -->
             <div class="rounded-xl bg-accent/10 border border-accent/20 p-4">
-              <div class="font-bold text-[14px] mb-2">🔗 Connexion par lien officiel</div>
+              <div class="font-bold text-[14px] mb-2">🔗 Connexion nouvel onglet + auto-refresh</div>
               <div class="text-[13px] text-white/60 leading-[1.5]">
                 <b class="text-white">Parcours voulu :</b><br>
                 MyNote → Toutatice → EduConnect → retour MyNote<br><br>
@@ -404,16 +404,97 @@ function initNav(){
   document.getElementById('desktopNav').innerHTML = items.map(i=>`<button data-nav="${i.id}" onclick="navigate('${i.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${i.id==='accueil'?'bg-accent text-white':'text-white/60 hover:bg-white/5'}"><span>${i.icon}</span>${i.label}</button>`).join('');
 }
 
-// NOUVEAU FLUX LIEN EDUCONNECT AVEC RETOUR AUTO
+// NOUVEAU FLUX: MyNote reste ouvert + nouvel onglet Toutatice + auto-actualisation
+let pollingInterval = null;
+let toutaticeTab = null;
+
 document.getElementById('btnLinkEduconnect').onclick=()=>{
   const url = document.getElementById('pronoteUrl').value.trim();
   if(!url) return alert('Entre ton URL Pronote');
   state.pronoteUrl=url; save();
-  const redirectUri = encodeURIComponent(location.origin + '/auth/callback');
-  const authUrl = `/auth/start?pronoteUrl=${encodeURIComponent(url)}&redirect_uri=${redirectUri}`;
-  // Flux auto: MyNote -> /auth/start -> /browse?url=Toutatice&autoReturn=1 -> EduConnect -> Pronote -> auto retour MyNote
-  window.location.href = authUrl;
-  localStorage.setItem('mynote_pending_auth', JSON.stringify({pronoteUrl:url, at:Date.now(), autoReturn:true}));
+  
+  // 1. Garde MyNote ouvert, affiche état "En attente de connexion..."
+  document.getElementById('btnLinkEduconnect').innerHTML = '⏳ En attente de connexion Toutatice...';
+  document.getElementById('btnLinkEduconnect').disabled = true;
+  
+  const statusDiv = document.createElement('div');
+  statusDiv.id = 'pollingStatus';
+  statusDiv.className = 'mt-4 p-4 rounded-xl bg-accent/10 border border-accent/30 text-[13px]';
+  statusDiv.innerHTML = '<div class="font-bold text-accent2">🔗 Onglet Toutatice ouvert</div><div class="text-white/60 mt-1">Connecte-toi avec EduConnect dans le nouvel onglet. MyNote va s\'actualiser automatiquement dès que tu seras connecté.</div><div class="mt-3 flex items-center gap-2"><div class="w-2 h-2 bg-accent rounded-full animate-pulse"></div><span class="text-[11px] text-white/40">Polling session toutes les 2s...</span></div>';
+  document.getElementById('btnLinkEduconnect').parentNode.appendChild(statusDiv);
+  
+  // 2. Ouvre Toutatice dans un nouvel onglet via proxy (pour capturer les cookies côté serveur)
+  const toutaticeUrl = `https://www.toutatice.fr/cas/login?service=${encodeURIComponent(url)}`;
+  const proxiedUrl = `/browse?url=${encodeURIComponent(toutaticeUrl)}&autoReturn=0&pronoteUrl=${encodeURIComponent(url)}`;
+  toutaticeTab = window.open(proxiedUrl, '_blank');
+  
+  if(!toutaticeTab) {
+    alert('Pop-up bloqué ! Autorise les pop-ups pour MyNote, puis réessaie.');
+    document.getElementById('btnLinkEduconnect').innerHTML = '🔗 Se connecter via EduConnect (lien)';
+    document.getElementById('btnLinkEduconnect').disabled = false;
+    statusDiv.remove();
+    return;
+  }
+  
+  // 3. Polling: vérifie toutes les 2s si la session Pronote est active côté serveur
+  let attempts = 0;
+  pollingInterval = setInterval(async ()=>{
+    attempts++;
+    try {
+      const res = await fetch('/api/session-data');
+      const data = await res.json();
+      console.log('Polling session', data);
+      
+      const statusEl = document.getElementById('pollingStatus');
+      if(statusEl) {
+        statusEl.innerHTML = '<div class="font-bold text-accent2">🔗 Connexion en cours...</div><div class="text-white/60 mt-1">Tentative '+attempts+' • Cookies: '+(data.cookiesCount||0)+' • Pronote: '+(data.hasPronoteCookie?'✅':'⏳')+'</div><div class="mt-2 text-[11px] text-white/30">'+(data.message||'')+'</div>';
+      }
+      
+      if(data.hasPronoteCookie) {
+        // Session Pronote détectée ! Actualise MyNote automatiquement
+        clearInterval(pollingInterval);
+        if(statusEl) {
+          statusEl.className = 'mt-4 p-4 rounded-xl bg-success/10 border border-success/30 text-[13px]';
+          statusEl.innerHTML = '<div class="font-bold text-success">✅ Connecté via Toutatice !</div><div class="text-white/70 mt-1">Session Pronote capturée. Actualisation de MyNote...</div>';
+        }
+        
+        // Ferme l'onglet Toutatice si possible
+        try { toutaticeTab.close(); } catch {}
+        
+        // Actualise MyNote avec les vraies données
+        setTimeout(()=>{
+          state.isDemo = false;
+          state.lastSync = Date.now();
+          state.realSession = true;
+          save();
+          enterApp();
+          document.getElementById('realBadge').classList.remove('hidden');
+          document.getElementById('demoBadge').classList.add('hidden');
+          // Affiche un toast
+          const toast = document.createElement('div');
+          toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-success text-white px-6 py-3 rounded-full font-bold shadow-lg z-50';
+          toast.textContent = '✅ Connecté ! Données réelles chargées';
+          document.body.appendChild(toast);
+          setTimeout(()=>toast.remove(), 4000);
+        }, 1000);
+      }
+      
+      // Timeout après 5 min
+      if(attempts > 150) {
+        clearInterval(pollingInterval);
+        if(statusEl) {
+          statusEl.className = 'mt-4 p-4 rounded-xl bg-warning/10 border border-warning/30 text-[13px]';
+          statusEl.innerHTML = '<div class="font-bold text-warning">⏰ Timeout</div><div class="text-white/60 mt-1">Pas de session détectée après 5 min. Réessaie ou utilise la méthode QR Code.</div>';
+        }
+        document.getElementById('btnLinkEduconnect').innerHTML = '🔗 Se connecter via EduConnect (lien)';
+        document.getElementById('btnLinkEduconnect').disabled = false;
+      }
+    } catch(e){
+      console.error('Polling error', e);
+    }
+  }, 2000);
+  
+  localStorage.setItem('mynote_pending_auth', JSON.stringify({pronoteUrl:url, at:Date.now(), autoReturn:false, polling:true}));
 };
 
 document.getElementById('btnBookmarklet').onclick=()=>{
