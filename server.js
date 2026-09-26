@@ -325,9 +325,9 @@ app.post('/api/login-qr', async (req,res)=>{
       try{ const p=JSON.parse(raw); if(p.url) qrObj=p; }catch{}
     }
     if(!qrObj?.url){
-      const urlMatch=raw.match(/https?:\\/\\/[^\\s"']+\\.index-education\\.net\\/pronote\\/?/i);
-      const loginMatch=raw.match(/"login"\\s*:\\s*"([A-F0-9]+)"/i);
-      const jetonMatch=raw.match(/"jeton"\\s*:\\s*"([A-F0-9]+)"/i) || raw.match(/([A-F0-9]{100,})/i);
+      const urlMatch=raw.match(/https?:\/\/[^\s"']+\.index-education\.net\/pronote\/?/i);
+      const loginMatch=raw.match(/"login"\s*:\s*"([A-F0-9]+)"/i);
+      const jetonMatch=raw.match(/"jeton"\s*:\s*"([A-F0-9]+)"/i) || raw.match(/([A-F0-9]{100,})/i);
       if(urlMatch) qrObj={url:urlMatch[0], login:loginMatch?.[1], jeton:jetonMatch?.[1]||jetonMatch?.[0]};
     }
     if(!qrObj?.url||!qrObj?.login||!qrObj?.jeton) return res.status(400).json({error:'QR incomplet'});
