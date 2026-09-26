@@ -4,406 +4,208 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyNote — Ton école, enfin claire.</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{bg:'#0B1224',card:'#151E35',cardHover:'#1C2847',border:'#233154',accent:'#6C7CFF',accent2:'#8B9AFF',success:'#2ECC71',warning:'#FFB020',danger:'#FF5A5F'}}}}
-</script>
-<style>
-*{ -webkit-tap-highlight-color:transparent } body{background:#0B1224;font-family:Inter,sans-serif;overscroll-behavior:none}
-.card{background:linear-gradient(180deg,#1A2442 0%,#151E35 100%);border:1px solid #233154}
-.shadow-glow{box-shadow:0 0 0 1px rgba(108,124,255,0.1),0 8px 32px rgba(0,0,0,0.4)}
-.timeline-line{position:absolute;left:11px;top:24px;bottom:-12px;width:2px;background:#233154}
-</style>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{bg:'#0B1224',card:'#151E35',border:'#233154',accent:'#6C7CFF',accent2:'#8B9AFF',success:'#2ECC71',danger:'#FF5A5F'}}}}</script>
+<style>body{background:#0B1224;font-family:Inter,sans-serif}.card{background:linear-gradient(180deg,#1A2442 0%,#151E35 100%);border:1px solid #233154}</style>
 </head>
-<body class="bg-bg text-white antialiased min-h-screen">
+<body class="bg-bg text-white min-h-screen flex items-center justify-center p-4">
 
-<!-- LOGIN -->
-<div id="loginScreen" class="min-h-screen flex flex-col lg:flex-row">
-  <div class="lg:w-[45%] p-8 lg:p-12 flex flex-col relative overflow-hidden">
-    <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px]"></div>
-    <div class="flex items-center gap-3 mb-10">
-      <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold text-lg">M</div>
-      <span class="font-bold text-xl tracking-tight">MyNote</span>
-      <span class="ml-2 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">ANITA CONTI • ENT FIX</span>
-    </div>
-    <h1 class="text-[44px] lg:text-[52px] font-[800] leading-[0.9] tracking-[-0.03em] mb-4">Ton école,<br><span class="text-accent2">enfin claire.</span></h1>
-    <p class="text-[15px] leading-[1.5] text-white/60 max-w-[400px] mb-6">Ton lycée bloque les serveurs externes. Le bookmarklet extrait tes données directement depuis ton navigateur quand tu es dans Pronote.</p>
-    
-    <div class="space-y-3 max-w-[420px]">
-      <div class="p-3 rounded-2xl bg-danger/10 border border-danger/20 text-[12px] leading-[1.4]">
-        <b>🚫 Pourquoi QR Code ne marche pas :</b><br>
-        <code class="text-[11px]">mobile.eleve.html → ENT - Erreur technique</code><br>
-        Toutatice bloque les IP US (Render). Même Pawnote échoue.
-      </div>
-      <div class="p-3 rounded-2xl bg-success/10 border border-success/20 text-[12px]">
-        <b>✅ Solution bookmarklet :</b><br>
-        Tu vas dans Pronote via Toutatice → tu cliques sur un favori → MyNote récupère EDT/Notes/Devoirs depuis TON navigateur.
-      </div>
-    </div>
-
-    <div class="mt-auto pt-8 text-[11px] text-white/30">Lycée Anita Conti • 0352686e • MyNote Beta</div>
+<div id="loginScreen" class="w-full max-w-[640px]">
+  <div class="text-center mb-6">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold mb-3">🏫 Anita Conti • 0352686e • ENT Toutatice bloque Render</div>
+    <h1 class="text-[36px] font-[800] leading-[0.9]">MyNote <span class="text-accent2">méthode ultra simple</span></h1>
+    <p class="text-white/60 text-[14px] mt-2">Pas de QR Code, pas de favori compliqué. Juste copier-coller.</p>
   </div>
 
-  <div class="lg:w-[55%] p-6 lg:p-8 flex items-center justify-center bg-[#0E162C]">
-    <div class="w-full max-w-[520px]">
-      <div class="card rounded-[28px] shadow-glow p-6 lg:p-7">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="text-[20px] font-bold">Connexion</h2>
-          <span class="px-2.5 py-1 rounded-full bg-success/20 text-success text-[10px] font-bold">BOOKMARKLET RECOMMANDÉ</span>
-        </div>
-
-        <div class="flex gap-1 mb-5 p-1 rounded-xl bg-[#0B1224] border border-border">
-          <button id="tabBook" class="flex-1 h-[36px] rounded-lg bg-accent text-white font-semibold text-[12px]">🔖 Bookmarklet</button>
-          <button id="tabQr" class="flex-1 h-[36px] rounded-lg text-white/50 text-[12px]">📱 QR Code</button>
-          <button id="tabDirect" class="flex-1 h-[36px] rounded-lg text-white/50 text-[12px]">🔑 Direct</button>
-        </div>
-
-        <div id="panelBook" class="space-y-4">
-          <div class="rounded-xl bg-[#0B1224] border border-border p-4">
-            <div class="text-[12px] font-bold mb-3">📌 Étape 1 : Glisse ce bouton dans ta barre de favoris</div>
-            <div class="flex justify-center my-3">
-              <a id="bookmarkletLink" href="#" class="px-5 py-3 rounded-xl bg-accent hover:bg-accent2 text-white font-bold text-[14px] shadow-glow cursor-grab">📌 MyNote - Extraire Pronote</a>
-            </div>
-            <div class="text-[11px] text-white/40 text-center">Affiche ta barre de favoris : Ctrl+Shift+B → Glisse le bouton ↑ dans la barre</div>
-          </div>
-
-          <div class="rounded-xl bg-accent/10 border border-accent/20 p-4 text-[12px] leading-[1.5]">
-            <b>Étape 2 : Va dans Pronote</b><br>
-            Ouvre <a href="https://www.toutatice.fr" target="_blank" class="underline text-accent2">toutatice.fr</a> → EduConnect → <b>Pronote</b><br><br>
-            <b>Étape 3 : Clique sur le favori</b><br>
-            Quand tu vois ton EDT dans Pronote, clique sur le favori <b>"📌 MyNote - Extraire Pronote"</b> dans ta barre de favoris<br><br>
-            <span class="text-amber-300">⚠️ Important : Tu dois être DANS Pronote (url avec pronote/index-education), pas sur MyNote !</span><br>
-            Une bulle violette "✅ Données extraites" apparaît.
-          </div>
-
-          <button id="btnLoadBookmarklet" class="w-full h-[48px] rounded-xl bg-success text-black font-bold text-[14px]">📥 Étape 4 : Charger dans MyNote</button>
-          <div id="bookStatus" class="text-[12px] p-3 rounded-xl hidden"></div>
-
-          <div class="rounded-xl bg-white/5 border border-border p-3">
-            <div class="text-[11px] font-bold mb-1">Code favori (si glisser ne marche pas) :</div>
-            <textarea id="bookmarkletCode" readonly class="w-full h-[60px] p-2 rounded-lg bg-black/50 text-[9px] font-mono border border-border"></textarea>
-          </div>
-        </div>
-
-        <div id="panelQr" class="space-y-3 hidden">
-          <textarea id="qrData" placeholder="Colle QR Code" class="w-full h-[70px] p-3 rounded-xl bg-[#0B1224] border border-border text-[11px] font-mono"></textarea>
-          <input id="qrPin" placeholder="PIN 4 chiffres" maxlength="4" class="w-full h-[40px] px-3 rounded-xl bg-[#0B1224] border border-border">
-          <button id="btnConnectQR" class="w-full h-[44px] rounded-xl bg-accent font-semibold">Tester QR (va échouer si ENT)</button>
-          <div id="qrStatus" class="text-[11px] p-3 rounded-xl hidden"></div>
-        </div>
-
-        <div id="panelDirect" class="space-y-3 hidden">
-          <input id="pronoteUrl" value="https://0352686e.index-education.net/pronote/" class="w-full h-[40px] px-3 rounded-xl bg-[#0B1224] border border-border text-[12px]">
-          <input id="directUser" placeholder="Identifiant direct" class="w-full h-[40px] px-3 rounded-xl bg-[#0B1224] border border-border text-[12px]">
-          <input id="directPass" type="password" placeholder="Mot de passe" class="w-full h-[40px] px-3 rounded-xl bg-[#0B1224] border border-border text-[12px]">
-          <button id="btnConnectDirect" class="w-full h-[44px] rounded-xl bg-success text-black font-bold">Tester direct</button>
-          <div id="directStatus" class="text-[11px] p-3 rounded-xl hidden"></div>
-        </div>
-
-        <div id="globalStatus" class="mt-3 text-[11px] p-3 rounded-xl hidden"></div>
-      </div>
+  <div class="card rounded-[24px] p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="font-bold text-[18px]">Comment avoir tes vraies données ?</h2>
+      <span class="px-2 py-1 rounded-full bg-success/20 text-success text-[10px] font-bold">100% OFFICIEL</span>
     </div>
+
+    <!-- METHODE ULTRA SIMPLE -->
+    <div class="space-y-4">
+      <div class="rounded-xl bg-accent/10 border border-accent/20 p-4">
+        <div class="font-bold text-[14px] mb-2">🎯 Méthode en 4 clics (2 minutes)</div>
+        <div class="space-y-3 text-[13px] leading-[1.5]">
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center font-bold text-[12px] shrink-0">1</div>
+            <div><b>Ouvre Toutatice dans un nouvel onglet</b><br>
+              <a href="https://www.toutatice.fr" target="_blank" class="inline-flex mt-1 px-3 py-1.5 rounded-lg bg-white text-black font-bold text-[12px]">Ouvrir toutatice.fr →</a><br>
+              <span class="text-[11px] text-white/50">Connecte-toi avec EduConnect, puis clique sur Pronote. Tu dois voir ton emploi du temps Pronote normal.</span>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center font-bold text-[12px] shrink-0">2</div>
+            <div><b>Dans Pronote, fais Ctrl+A puis Ctrl+C</b><br>
+              <span class="text-[11px] text-white/60">Clique dans Pronote, appuie sur <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px]">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px]">A</kbd> (tout sélectionner), puis <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px]">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px]">C</kbd> (copier)</span>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center font-bold text-[12px] shrink-0">3</div>
+            <div><b>Colle ici :</b></div>
+          </div>
+        </div>
+      </div>
+
+      <textarea id="pasteArea" placeholder="Colle ici tout ce que tu as copié depuis Pronote (Ctrl+V) - même si c'est moche, MyNote va extraire EDT/Notes/Devoirs" class="w-full h-[120px] p-3 rounded-xl bg-[#0B1224] border border-border text-[12px]"></textarea>
+      
+      <button id="btnParsePaste" class="w-full h-[48px] rounded-xl bg-accent hover:bg-accent2 text-white font-bold text-[14px]">✨ Extraire mes données et afficher dans MyNote</button>
+
+      <div id="pasteStatus" class="text-[12px] p-3 rounded-xl hidden"></div>
+
+      <div class="rounded-xl bg-white/5 border border-border p-3 text-[11px] leading-[1.4]">
+        <b>🔧 Méthode avancée si copier-coller ne marche pas :</b><br>
+        Dans Pronote, fais <b>F12</b> → onglet <b>Console</b> → colle ce code et appuie Entrée :<br>
+        <code id="consoleCode" class="block mt-2 p-2 rounded bg-black/50 text-[10px] font-mono break-all">javascript: (function(){ let t=document.body.innerText; let d={url:location.href, text:t, time:Date.now()}; localStorage.setItem('mynote_bookmarklet', JSON.stringify({html:document.documentElement.outerHTML, url:location.href, bodyPreview:t, timetable:[], grades:[], homeworks:[], user:{name:'Élève'}})); alert('✅ Copié! Retourne sur MyNote et clique Charger'); })();</code>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('consoleCode').innerText); alert('Code copié!')" class="mt-2 px-3 py-1 rounded-lg bg-white/10 text-[11px]">Copier le code</button>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="btnLoadBookmarklet" class="flex-1 h-[40px] rounded-xl bg-white/10 text-[12px]">📥 Ou charger depuis favori (si tu l'as fait)</button>
+        <button onclick="localStorage.clear();location.reload()" class="h-[40px] px-3 rounded-xl bg-white/5 text-[11px]">Reset</button>
+      </div>
+
+      <div id="globalStatus" class="text-[11px] p-3 rounded-xl hidden"></div>
+    </div>
+  </div>
+
+  <div class="text-center mt-4 text-[11px] text-white/30">
+    Pourquoi c'est compliqué ? Ton lycée Anita Conti utilise ENT Toutatice qui bloque les serveurs US (Render).<br>
+    Donc on extrait depuis TON navigateur, pas depuis le serveur.
   </div>
 </div>
 
-<!-- APP SCREEN - DESIGN PREMIUM 10 SCREENS -->
-<div id="appScreen" class="hidden min-h-screen bg-bg">
-  <!-- Header -->
-  <div class="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border">
-    <div class="max-w-[1200px] mx-auto px-6 h-[64px] flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-accent flex items-center justify-center font-bold">M</div>
-        <span class="font-bold text-[18px]">MyNote</span>
-        <span class="px-2.5 py-1 rounded-full bg-success/20 text-success text-[10px] font-bold">DONNÉES RÉELLES</span>
-        <span id="methodBadge" class="px-2.5 py-1 rounded-full bg-accent/20 text-accent2 text-[10px] font-bold"></span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent2 flex items-center justify-center text-[12px] font-bold">E</div>
-        <button onclick="localStorage.clear();location.reload()" class="px-3 py-1.5 rounded-full bg-white/10 text-[12px]">Déconnexion</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="max-w-[1200px] mx-auto px-6 py-8">
-    <!-- User card -->
-    <div id="userInfo" class="card rounded-[20px] p-6 mb-6 flex items-center justify-between">
-      <div><div class="text-[22px] font-bold" id="userName">Élève</div><div class="text-[13px] text-white/60" id="userClass">Anita Conti</div></div>
-      <div class="text-right"><div class="text-[11px] text-white/40">Mise à jour</div><div class="text-[13px] font-mono" id="updateTime">Maintenant</div></div>
+<div id="appScreen" class="hidden min-h-screen bg-bg w-full">
+  <div class="max-w-[1000px] mx-auto p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span><span class="px-2 py-1 rounded-full bg-success/20 text-success text-[10px] font-bold">DONNÉES RÉELLES</span></div>
+      <button onclick="localStorage.clear();location.reload()" class="px-4 py-2 rounded-xl bg-white/10 text-[12px]">Retour</button>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex gap-2 mb-6 overflow-x-auto">
-      <button class="tabBtn active px-4 py-2 rounded-full bg-accent text-white text-[13px] font-semibold" data-tab="today">Aujourd'hui</button>
-      <button class="tabBtn px-4 py-2 rounded-full bg-white/10 text-white/60 text-[13px]" data-tab="timetable">Emploi du temps</button>
-      <button class="tabBtn px-4 py-2 rounded-full bg-white/10 text-white/60 text-[13px]" data-tab="homework">Devoirs</button>
-      <button class="tabBtn px-4 py-2 rounded-full bg-white/10 text-white/60 text-[13px]" data-tab="grades">Notes</button>
-    </div>
+    <div id="userInfo" class="card rounded-[20px] p-5 mb-5"></div>
 
-    <!-- Today view -->
-    <div id="viewToday" class="grid lg:grid-cols-3 gap-5">
-      <!-- Next course -->
+    <div class="grid lg:grid-cols-3 gap-4">
       <div class="lg:col-span-2 card rounded-[20px] p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[16px]">📚 Prochain cours</h3>
-          <span class="text-[11px] px-2 py-1 rounded-full bg-success/20 text-success">En direct</span>
-        </div>
-        <div id="nextCourse" class="space-y-3"></div>
+        <h3 class="font-bold mb-3">📅 Emploi du temps</h3>
+        <div id="timetableView" class="space-y-2 text-[13px]"></div>
       </div>
-      <!-- Quick stats -->
       <div class="card rounded-[20px] p-5">
-        <h3 class="font-bold text-[14px] mb-4">📊 Aujourd'hui</h3>
-        <div class="space-y-3 text-[13px]">
-          <div class="flex justify-between"><span class="text-white/60">Cours</span><span id="statCourses" class="font-bold">-</span></div>
-          <div class="flex justify-between"><span class="text-white/60">Devoirs</span><span id="statHW" class="font-bold">-</span></div>
-          <div class="flex justify-between"><span class="text-white/60">Moyenne</span><span id="statAvg" class="font-bold">-</span></div>
-        </div>
+        <h3 class="font-bold mb-3">📊 Notes</h3>
+        <div id="gradesView" class="text-[13px]"></div>
       </div>
-      <!-- Timetable preview -->
-      <div class="lg:col-span-2 card rounded-[20px] p-5">
-        <h3 class="font-bold text-[14px] mb-4">📅 Emploi du temps - Demain</h3>
-        <div id="timetableView" class="space-y-2"></div>
-      </div>
-      <!-- Homeworks preview -->
-      <div class="card rounded-[20px] p-5">
-        <h3 class="font-bold text-[14px] mb-4">📝 Devoirs à faire</h3>
-        <div id="homeworksView" class="space-y-3"></div>
+      <div class="lg:col-span-3 card rounded-[20px] p-5">
+        <h3 class="font-bold mb-3">📚 Devoirs</h3>
+        <div id="homeworksView" class="space-y-2 text-[13px]"></div>
       </div>
     </div>
 
-    <!-- Timetable full -->
-    <div id="viewTimetable" class="hidden">
-      <div class="card rounded-[20px] p-6">
-        <h3 class="font-bold text-[18px] mb-5">📅 Emploi du temps complet</h3>
-        <div id="timetableFull" class="space-y-2"></div>
-      </div>
-    </div>
-
-    <!-- Homework full -->
-    <div id="viewHomework" class="hidden">
-      <div class="card rounded-[20px] p-6">
-        <h3 class="font-bold text-[18px] mb-5">📚 Devoirs</h3>
-        <div id="homeworksFull" class="space-y-3"></div>
-      </div>
-    </div>
-
-    <!-- Grades -->
-    <div id="viewGrades" class="hidden">
-      <div class="card rounded-[20px] p-6">
-        <h3 class="font-bold text-[18px] mb-5">📊 Notes</h3>
-        <div id="gradesView" class="space-y-3"></div>
-      </div>
-    </div>
-
-    <details class="mt-8">
-      <summary class="text-[11px] text-white/30 cursor-pointer">Debug données brutes</summary>
-      <pre id="rawData" class="mt-3 p-4 rounded-xl bg-black/50 text-[10px] overflow-auto max-h-[400px] whitespace-pre-wrap"></pre>
-    </details>
+    <details class="mt-6"><summary class="text-[11px] text-white/30">Voir données brutes</summary><pre id="rawData" class="mt-2 p-3 rounded-xl bg-black/50 text-[10px] whitespace-pre-wrap max-h-[400px] overflow-auto"></pre></details>
   </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-let extractedData=null;
-
-// Bookmarklet with Pronote extraction
-const bookmarkletJS = `javascript:(function(){
-  try{
-    let url=location.href;
-    if(!url.includes('pronote') && !url.includes('index-education')){
-      alert('❌ Tu n\\'es pas dans Pronote!\\n\\nVa sur toutatice.fr → EduConnect → Pronote, puis clique sur ce favori QUAND tu es dans Pronote (tu dois voir ton EDT).\\n\\nTu es actuellement sur: '+url);
-      return;
-    }
-    let data={url:url,time:Date.now(),timetable:[],grades:[],homeworks:[],user:{}};
-    // Extract user name
-    try{
-      let nameEl=document.querySelector('[class*="nom"], .ibe_util_texte, #id_19, .utilisateur');
-      if(nameEl) data.user.name=nameEl.innerText.trim().substring(0,100);
-      // Try to find student name in page
-      let bodyText=document.body.innerText;
-      let m=bodyText.match(/Bonjour\\s+([^\\n]+)/);
-      if(m) data.user.name=m[1].trim();
-    }catch(e){}
-    
-    // Extract timetable - try multiple selectors
-    try{
-      document.querySelectorAll('.EDT_Cours, .cours, div[class*="cours"], [id*="cours"]').forEach(el=>{
-        let txt=el.innerText.trim();
-        if(txt.length>5 && txt.length<200){
-          let time=el.querySelector('[class*="heure"]')?.innerText||'';
-          let subj=el.querySelector('[class*="matiere"], [class*="libelle"]')?.innerText||txt.split('\\n')[0];
-          let room=el.querySelector('[class*="salle"]')?.innerText||'';
-          let teacher=el.querySelector('[class*="prof"], [class*="enseignant"]')?.innerText||'';
-          if(txt) data.timetable.push({text:txt,time,subject:subj,room,teacher,html:el.outerHTML.substring(0,300)});
-        }
-      });
-      // Fallback: parse from body text for timetable pattern
-      if(data.timetable.length===0){
-        let lines=document.body.innerText.split('\\n').filter(l=>l.trim().length>0);
-        lines.forEach(l=>{
-          if(l.match(/\\d{1,2}h\\d{0,2}/) && l.length<100){
-            data.timetable.push({text:l,time:l.match(/\\d{1,2}h\\d{0,2}/)?.[0]||'',subject:l});
-          }
-        });
-      }
-    }catch(e){data.timetableError=e.message;}
-    
-    // Extract grades
-    try{
-      document.querySelectorAll('table tr, .note, [class*="note"]').forEach(el=>{
-        let txt=el.innerText.trim();
-        if(txt.match(/\\d{1,2}(,|\\.)\\d/) && txt.length<200){
-          data.grades.push({text:txt});
-        }
-      });
-    }catch(e){}
-    
-    // Extract homeworks
-    try{
-      document.querySelectorAll('[class*="devoir"], [class*="TAF"], .travail').forEach(el=>{
-        let txt=el.innerText.trim();
-        if(txt.length>10 && txt.length<500){
-          data.homeworks.push({text:txt});
-        }
-      });
-    }catch(e){}
-    
-    data.bodyPreview=document.body.innerText.substring(0,5000);
-    data.html=document.documentElement.outerHTML.substring(0,80000);
-    
-    localStorage.setItem('mynote_bookmarklet',JSON.stringify(data));
-    
-    let banner=document.createElement('div');
-    banner.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999999;background:#6C7CFF;color:white;padding:18px 28px;border-radius:16px;font-family:Inter,sans-serif;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,0.5);text-align:center;max-width:90%';
-    banner.innerHTML='✅ MyNote: '+data.timetable.length+' cours, '+data.grades.length+' notes, '+data.homeworks.length+' devoirs extraits!<br><span style=\\'font-size:12px;opacity:0.9\\'>Retourne sur MyNote → Clique Charger</span><br><span style=\\'font-size:11px;opacity:0.7\\'>'+url.substring(0,60)+'</span>';
-    document.body.appendChild(banner);
-    setTimeout(()=>banner.remove(),5000);
-    
-    // Also try to send to server (may fail due to CORS, but localStorage is enough)
-    fetch('https://mynote-k8am.onrender.com/api/bookmarklet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,timetable:data.timetable.length,grades:data.grades.length})}).catch(()=>{});
-    
-  }catch(e){alert('MyNote erreur: '+e.message+'\\n'+e.stack);}
-})();`;
-
-$('bookmarkletLink').href=bookmarkletJS;
-$('bookmarkletCode').value=bookmarkletJS;
-
-function switchTab(t){
-  ['Book','Qr','Direct'].forEach(x=>{
-    const p=$('panel'+x); const tab=$('tab'+x);
-    if(p) p.classList.toggle('hidden',x!==t);
-    if(tab) tab.className=x===t?'flex-1 h-[36px] rounded-lg bg-accent text-white font-semibold text-[12px]':'flex-1 h-[36px] rounded-lg text-white/50 text-[12px]';
-  });
-}
-$('tabBook').onclick=()=>switchTab('Book');
-$('tabQr').onclick=()=>switchTab('Qr');
-$('tabDirect').onclick=()=>switchTab('Direct');
-
 function showStatus(id,msg,type){
   const el=$(id); el.classList.remove('hidden'); el.innerHTML=msg;
-  el.className='text-[11px] p-3 rounded-xl '+(type==='success'?'bg-success/20 text-success border border-success/20':type==='error'?'bg-danger/20 text-danger border border-danger/20':'bg-white/5 border border-border');
+  el.className='text-[12px] p-3 rounded-xl '+(type==='success'?'bg-success/20 text-success border border-success/20':type==='error'?'bg-danger/20 text-danger border border-danger/20':'bg-white/5 border border-border');
 }
 
-// Load bookmarklet
-$('btnLoadBookmarklet').onclick=()=>{
-  const raw=localStorage.getItem('mynote_bookmarklet');
-  if(!raw){ showStatus('bookStatus','❌ Aucune donnée. <br><b>Tu as bien cliqué sur le favori QUAND tu étais DANS Pronote ?</b><br>Tu dois être sur une page avec <code>pronote</code> dans l URL, pas sur MyNote.<br><br>Refais: Toutatice → Pronote → clique favori → reviens ici → Charger','error'); return; }
-  try{
-    const data=JSON.parse(raw);
-    // Check if data is from MyNote itself (user error)
-    if(data.url && data.url.includes('mynote-k8am.onrender.com')){
-      showStatus('bookStatus','❌ Tu as cliqué sur le favori en étant sur MyNote !<br><br><b>Il faut cliquer sur le favori quand tu es DANS Pronote</b> (via Toutatice), pas sur MyNote.<br><br>Refais: 1) Va sur toutatice.fr → Pronote 2) Une fois dans Pronote (tu vois ton EDT), clique sur le favori 3) Reviens ici','error');
-      return;
+$('btnParsePaste').onclick=()=>{
+  const text=$('pasteArea').value.trim();
+  if(!text || text.length<20){ showStatus('pasteStatus','❌ Colle d\'abord ce que tu as copié depuis Pronote (Ctrl+A, Ctrl+C dans Pronote, puis Ctrl+V ici)','error'); return; }
+  
+  // Check if user pasted MyNote content by mistake
+  if(text.includes('mynote-k8am.onrender.com') && text.includes('Ton école, enfin claire')){
+    showStatus('pasteStatus','❌ Tu as copié MyNote, pas Pronote !<br><br>Il faut :<br>1) Aller sur toutatice.fr → Pronote (tu dois voir ton EDT Pronote)<br>2) Là, faire Ctrl+A, Ctrl+C<br>3) Revenir ici et Ctrl+V','error');
+    return;
+  }
+
+  // Parse pasted text
+  let timetable=[], grades=[], homeworks=[];
+  const lines=text.split('\\n').map(l=>l.trim()).filter(l=>l.length>0);
+  
+  // Extract timetable: lines with time like 8h00, 10h30, etc + subject
+  lines.forEach(line=>{
+    if(line.match(/\\d{1,2}h\\d{0,2}/) && line.length<120){
+      // Likely a course
+      if(line.match(/(Math|Français|Histoire|Anglais|Physique|SVT|EPS|SES|Philo|NSI|Spé|Cours)/i) || line.length>10){
+        timetable.push({text:line, subject:line});
+      }
     }
-    if(!data.url || (!data.url.includes('pronote') && !data.url.includes('index-education'))){
-      showStatus('bookStatus','⚠️ Données extraites depuis: '+data.url+'<br>Ce ne semble pas être Pronote. Es-tu bien dans Pronote?','error');
+    // Grades: pattern like 12,5 or 15/20
+    if(line.match(/\\d{1,2}([.,]\\d)?\\s*(\\/20)?/) && line.length<80 && (line.toLowerCase().includes('moy') || line.match(/\\d/))){
+      if(line.length<100) grades.push({text:line});
     }
-    showStatus('bookStatus',`✅ Données chargées depuis <b>${data.url}</b><br>${data.timetable?.length||0} cours, ${data.grades?.length||0} notes, ${data.homeworks?.length||0} devoirs<br>Body preview: ${(data.bodyPreview||'').substring(0,200)}...`,'success');
-    extractedData=data;
-    // Build real data structure
-    const realData={
-      user:{name:data.user?.name||'Élève',class:'Anita Conti - '+ (data.url.includes('0352686e')?'0352686e':''),id:'bookmarklet'},
-      instance:{url:data.url},
-      method:'bookmarklet',
-      timetable:{classes: data.timetable.map((t,i)=>({startDate:new Date(Date.now()+i*3600000).toISOString(),subject:{name:t.subject||t.text?.split('\\n')[0]||'Cours'},teacher:{name:t.teacher||''},room:{name:t.room||''},text:t.text}))},
-      grades:{grades: data.grades.map(g=>({subject:{name:'Matière'},grade:{value:g.text}})),averages:{student:'-'}},
-      homeworks: data.homeworks.map(h=>({subject:{name:'Devoir'},description:h.text})),
-      raw:data
-    };
-    localStorage.setItem('mynote_real_data',JSON.stringify(realData));
-    setTimeout(()=>enterApp(realData),800);
-  }catch(e){ showStatus('bookStatus','Erreur parse: '+e.message,'error'); }
+    // Homeworks: long lines with "Devoir", "À faire", etc
+    if(line.length>20 && line.length<300 && (line.toLowerCase().includes('devoir') || line.toLowerCase().includes('faire') || line.toLowerCase().includes('exercice'))){
+      homeworks.push({text:line});
+    }
+  });
+
+  // If no structured data, treat all lines as potential courses
+  if(timetable.length===0){
+    // Take first 20 lines as courses if they look like timetable
+    lines.slice(0,30).forEach(l=>{
+      if(l.length>5 && l.length<150) timetable.push({text:l, subject:l});
+    });
+  }
+
+  const data={
+    user:{name:'Élève (copié-collé)', class:'Anita Conti 0352686e'},
+    instance:{url:'https://0352686e.index-education.net/pronote/'},
+    method:'paste',
+    timetable:{classes: timetable.map((t,i)=>({startDate:new Date(Date.now()+i*3600000).toISOString(), subject:{name:t.subject||t.text}, text:t.text}))},
+    grades:{grades: grades.map(g=>({subject:{name:'Note'}, grade:{value:g.text}, text:g.text}))},
+    homeworks: homeworks.map(h=>({subject:{name:'Devoir'}, description:h.text, text:h.text})),
+    raw:{pastedText:text.substring(0,5000), parsed:{timetable: timetable.length, grades: grades.length, homeworks: homeworks.length}}
+  };
+
+  showStatus('pasteStatus',`✅ ${timetable.length} cours, ${grades.length} notes, ${homeworks.length} devoirs détectés<br>Chargement de l'interface...`,'success');
+  localStorage.setItem('mynote_real_data', JSON.stringify(data));
+  setTimeout(()=>enterApp(data), 800);
 };
 
-// QR and Direct (keep simple)
-$('btnConnectQR').onclick=async()=>{
-  const qrData=$('qrData')?.value?.trim(); const pin=$('qrPin')?.value?.trim();
-  if(!qrData){showStatus('qrStatus','Colle QR','error');return;}
-  showStatus('qrStatus','Test...','info');
+$('btnLoadBookmarklet').onclick=()=>{
+  const raw=localStorage.getItem('mynote_bookmarklet');
+  if(!raw){ showStatus('globalStatus','❌ Aucune donnée favori. Utilise plutôt le copier-coller ci-dessus, c\'est plus simple.','error'); $('globalStatus').classList.remove('hidden'); return; }
   try{
-    const res=await fetch('/api/login-qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qrData,pin})});
-    const j=await res.json(); if(!res.ok) throw new Error(j.error);
-    localStorage.setItem('mynote_real_data',JSON.stringify(j)); enterApp(j);
-  }catch(e){showStatus('qrStatus','❌ '+e.message,'error');}
-};
-$('btnConnectDirect').onclick=async()=>{
-  const pronoteUrl=$('pronoteUrl').value; const username=$('directUser').value; const password=$('directPass').value;
-  showStatus('directStatus','Test...','info');
-  try{
-    const res=await fetch('/api/login-direct',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pronoteUrl,username,password})});
-    const j=await res.json(); if(!res.ok) throw new Error(j.error);
-    localStorage.setItem('mynote_real_data',JSON.stringify(j)); enterApp(j);
-  }catch(e){showStatus('directStatus','❌ '+e.message,'error');}
+    const d=JSON.parse(raw);
+    if(d.url && d.url.includes('mynote-k8am')){ showStatus('globalStatus','❌ Tu as cliqué sur le favori en étant sur MyNote, pas dans Pronote! Va dans Pronote via Toutatice puis clique sur le favori.','error'); $('globalStatus').classList.remove('hidden'); return; }
+    const data={
+      user:{name:d.user?.name||'Élève', class:'Anita Conti'},
+      instance:{url:d.url},
+      method:'bookmarklet',
+      timetable:{classes: (d.timetable||[]).map((t,i)=>({startDate:new Date().toISOString(), subject:{name:t.subject||t.text||'Cours'}, text:t.text}))},
+      grades:{grades: (d.grades||[]).map(g=>({subject:{name:'Note'}, grade:{value:g.text}}))},
+      homeworks: (d.homeworks||[]).map(h=>({subject:{name:'Devoir'}, description:h.text})),
+      raw:d
+    };
+    localStorage.setItem('mynote_real_data', JSON.stringify(data));
+    enterApp(data);
+  }catch(e){ showStatus('globalStatus','Erreur: '+e.message,'error'); $('globalStatus').classList.remove('hidden'); }
 };
 
 function enterApp(data){
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
-  $('methodBadge').textContent=data.method||'real';
-  $('userName').textContent=data.user?.name||'Élève';
-  $('userClass').textContent=data.user?.class||'Anita Conti';
-  $('userAvatar').textContent=(data.user?.name||'E')[0];
-  $('updateTime').textContent=new Date().toLocaleTimeString('fr-FR');
+  $('userInfo').innerHTML=`<div class="font-bold text-[18px]">${data.user?.name||'Élève'}</div><div class="text-[13px] text-white/60">${data.user?.class||''}</div><div class="text-[11px] mt-2 px-2 py-1 rounded-full bg-success/20 text-success inline-block">Via ${data.method} • Données réelles depuis ton navigateur</div>`;
 
-  // Timetable
-  const tt = data.timetable?.classes||[];
-  $('timetableView').innerHTML = tt.length? tt.slice(0,8).map(c=>`
-    <div class="flex gap-3 p-3 rounded-xl bg-[#0B1224] border border-border">
-      <div class="w-12 text-center"><div class="text-[12px] font-bold">${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</div></div>
-      <div class="flex-1"><div class="font-semibold text-[13px]">${c.subject?.name||c.text||'Cours'}</div><div class="text-[11px] text-white/50">${c.teacher?.name||''} ${c.room?.name? '• '+c.room.name:''}</div></div>
-    </div>`).join('') : `<div class="text-[12px] text-white/40">Aucun cours extrait. Si tu es bien dans Pronote, le sélecteur CSS a peut-être changé. Données brutes ci-dessous.</div><pre class="mt-2 text-[10px] whitespace-pre-wrap">${(data.raw?.bodyPreview||JSON.stringify(data.timetable||{},null,2)).substring(0,2000)}</pre>`;
+  const tt=data.timetable?.classes||[];
+  $('timetableView').innerHTML= tt.length? tt.slice(0,12).map(c=>`<div class="p-3 rounded-xl bg-[#0B1224] border border-border"><div class="font-semibold text-[13px]">${c.subject?.name||c.text||'Cours'}</div><div class="text-[11px] text-white/50">${c.text||''}</div></div>`).join('') : '<div class="text-white/40">Aucun cours détecté. Colle plus de texte depuis Pronote.</div>';
 
-  $('timetableFull').innerHTML=$('timetableView').innerHTML;
-  $('nextCourse').innerHTML= tt[0]? `<div class="p-4 rounded-xl bg-accent/10 border border-accent/20"><div class="font-bold text-[16px]">${tt[0].subject?.name||tt[0].text||'Prochain cours'}</div><div class="text-[13px] text-white/60">${tt[0].teacher?.name||''} ${tt[0].room?.name||''}</div></div>` : '<div class="text-white/40 text-[13px]">Pas de cours aujourd\'hui</div>';
+  const gr=data.grades?.grades||[];
+  $('gradesView').innerHTML= gr.length? gr.slice(0,10).map(g=>`<div class="flex justify-between p-2 rounded-lg bg-[#0B1224] border border-border mb-1"><span class="text-[12px]">${g.text||g.grade?.value||''}</span></div>`).join('') : '<div class="text-white/40 text-[12px]">Colle tes notes depuis Pronote (page Notes)</div>';
 
-  // Homeworks
   const hw=data.homeworks||[];
-  $('homeworksView').innerHTML= hw.length? hw.slice(0,4).map(h=>`<div class="p-3 rounded-xl bg-[#0B1224] border border-border"><div class="font-semibold text-[12px]">${h.subject?.name||'Devoir'}</div><div class="text-[11px] text-white/60 mt-1">${(h.description||h.text||'').substring(0,120)}</div></div>`).join('') : '<div class="text-[12px] text-white/40">Pas de devoirs</div>';
-  $('homeworksFull').innerHTML=$('homeworksView').innerHTML;
+  $('homeworksView').innerHTML= hw.length? hw.map(h=>`<div class="p-3 rounded-xl bg-[#0B1224] border border-border"><div class="text-[12px]">${h.description||h.text||''}</div></div>`).join('') : '<div class="text-white/40">Pas de devoirs détectés. Va dans Pronote > Travail à faire, Ctrl+A, Ctrl+C, puis colle ici.</div>';
 
-  // Grades
-  const grades=data.grades?.grades||data.grades||[];
-  $('gradesView').innerHTML= grades.length? grades.slice(0,10).map(g=>`<div class="flex justify-between p-3 rounded-xl bg-[#0B1224] border border-border"><span class="text-[13px]">${g.subject?.name||g.text?.substring(0,30)||'Note'}</span><span class="font-bold text-[13px]">${g.grade?.value||g.text?.substring(0,20)||'-'}</span></div>`).join('') : `<div class="text-[12px] text-white/40">Pas de notes extraites</div><pre class="mt-2 text-[10px]">${(data.raw?.bodyPreview||'').substring(0,1000)}</pre>`;
-
-  $('statCourses').textContent=tt.length||0;
-  $('statHW').textContent=hw.length||0;
-  $('statAvg').textContent=data.grades?.averages?.student||'-';
-
-  $('rawData').textContent=JSON.stringify(data.raw||data,null,2).substring(0,15000);
-
-  // Tab handling
-  document.querySelectorAll('.tabBtn').forEach(btn=>{
-    btn.onclick=()=>{
-      document.querySelectorAll('.tabBtn').forEach(b=>{b.classList.remove('active','bg-accent','text-white');b.classList.add('bg-white/10','text-white/60');});
-      btn.classList.add('active','bg-accent','text-white'); btn.classList.remove('bg-white/10','text-white/60');
-      ['Today','Timetable','Homework','Grades'].forEach(v=>$('view'+v).classList.add('hidden'));
-      $('view'+btn.dataset.tab.charAt(0).toUpperCase()+btn.dataset.tab.slice(1)).classList.remove('hidden');
-    };
-  });
+  $('rawData').textContent=JSON.stringify(data.raw||data,null,2).substring(0,10000);
 }
 
 const saved=localStorage.getItem('mynote_real_data');
-if(saved){try{enterApp(JSON.parse(saved));}catch{}}
+if(saved){ try{ enterApp(JSON.parse(saved)); }catch{} }
 </script>
 </body>
 </html>
