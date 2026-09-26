@@ -413,6 +413,82 @@ app.get('/api/session-data', async (req, res) => {
   });
 });
 
+// --- NOUVEAU FLUX LIEN EDUCONNECT -> MYNOTE (sans iframe) ---
+const authStates = new Map();
+
+app.get('/auth/start', (req, res) => {
+  const { pronoteUrl, redirect_uri } = req.query;
+  if (!pronoteUrl) return res.status(400).send('pronoteUrl manquant');
+  
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const finalRedirect = redirect_uri || `${req.protocol}://${req.get('host')}/auth/callback`;
+  
+  authStates.set(state, {
+    pronoteUrl,
+    redirect_uri: finalRedirect,
+    createdAt: Date.now(),
+    sid: req.cookies.mynote_sid
+  });
+
+  const toutaticeLogin = `https://www.toutatice.fr/cas/login?service=${encodeURIComponent(pronoteUrl)}`;
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MyNote → EduConnect</title>
+    <style>body{font-family:Inter,sans-serif;background:#0B1224;color:white;padding:40px;max-width:600px;margin:auto}
+    .card{background:#151E35;border:1px solid #233154;border-radius:20px;padding:24px;margin:20px 0}
+    .btn{display:block;width:100%;height:52px;background:#6C7CFF;color:white;border-radius:12px;text-align:center;line-height:52px;font-weight:600;text-decoration:none;margin:12px 0}
+    code{background:#0B1224;padding:2px 6px;border-radius:6px;font-size:12px}
+    </style></head>
+    <body>
+      <h1>🔗 MyNote → Toutatice → EduConnect</h1>
+      <div class="card">
+        <b>Flux par lien officiel (sans iframe) :</b><br><br>
+        1. Tu vas être redirigé vers <b>Toutatice</b><br>
+        2. Toutatice te redirige vers <b>EduConnect</b><br>
+        3. Tu te connectes<br>
+        4. Retour Toutatice → Pronote<br>
+        5. <b>Dans Pronote, clique sur le bookmarklet "Retour vers MyNote"</b><br><br>
+        <b>Pourquoi pas de retour direct ?</b><br>
+        Toutatice (CAS) n'autorise que Pronote comme service, il refuse <code>${finalRedirect}</code>. C'est bloqué côté académie. Le bookmarklet est la seule méthode sans iframe.
+      </div>
+      <a class="btn" href="${toutaticeLogin}">Continuer vers Toutatice → EduConnect</a>
+      <div class="card">
+        <b>📌 Bookmarklet à glisser dans tes favoris AVANT :</b><br><br>
+        <a href="javascript:(function(){try{const d={url:location.href};const t=btoa(unescape(encodeURIComponent(JSON.stringify(d))));location.href='${finalRedirect}?state=${state}&realUrl='+encodeURIComponent(location.href);}catch(e){alert('Erreur: '+e.message)}})();" 
+           style="display:inline-block;padding:10px 16px;background:#6C7CFF;color:white;border-radius:10px;text-decoration:none;font-weight:bold">↩️ Retour vers MyNote</a><br><br>
+        <span style="font-size:12px;color:#888">Glisse ce bouton dans ta barre de favoris. Une fois dans Pronote, clique dessus.</span>
+      </div>
+      <p style="font-size:11px;color:#666">State: ${state}</p>
+      <p><a href="/" style="color:#6C7CFF">← Retour MyNote</a></p>
+    </body>
+    </html>
+  `);
+});
+
+app.get('/auth/callback', (req, res) => {
+  const { state, data, ticket, realUrl } = req.query;
+  if (ticket) {
+    return res.send(`<html><body style="background:#0B1224;color:white;font-family:Inter;padding:40px"><h1>Ticket CAS: ${ticket}</h1><p>Toutatice refuse normalement mynote comme service, donc ce cas n'arrive pas.</p><a href="/" style="color:#6C7CFF">Retour</a></body></html>`);
+  }
+  if (data) {
+    try {
+      const jsonStr = decodeURIComponent(escape(atob(data)));
+      const parsed = JSON.parse(jsonStr);
+      const sid = getSid(req, res);
+      const jar = jars.get(sid);
+      if (!jar['mynote_real']) jar['mynote_real'] = {};
+      jar['mynote_real'] = { url: parsed.url || realUrl, capturedAt: Date.now(), state };
+      return res.redirect(`/?real=1&state=${state}&realUrl=${encodeURIComponent(realUrl||parsed.url||'')}`);
+    } catch (e) {
+      return res.send(`<html><body style="background:#0B1224;color:white;padding:40px"><h1>Erreur</h1><pre>${e.message}</pre><a href="/">Retour</a></body></html>`);
+    }
+  }
+  res.redirect('/?real=1');
+});
+
 // Clear
 app.get('/api/clear', (req,res)=>{
   const sid = req.cookies.mynote_sid;
@@ -421,7 +497,7 @@ app.get('/api/clear', (req,res)=>{
   res.json({ ok:true });
 });
 
-app.get('/api/health', (req,res)=>res.json({ ok:true, jars: jars.size, pawnote: true }));
+app.get('/api/health', (req,res)=>res.json({ ok:true, jars: jars.size, pawnote: true, flow: 'link-educonnect' }));
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', ()=>{

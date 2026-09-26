@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MyNote — Ton école, enfin claire.</title>
+<meta name="theme-color" content="#0B1224">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','-apple-system','BlinkMacSystemFont','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+      colors: {
+        bg: '#0B1224',
+        card: '#151E35',
+        cardHover: '#1C2847',
+        card2: '#1E2B4A',
+        border: '#233154',
+        accent: '#6C7CFF',
+        accent2: '#8B9AFF',
+        success: '#2ECC71',
+        warning: '#FFB020',
+        danger: '#FF5A5F',
+      }
+    }
+  }
+}
+</script>
+<style>
+* { -webkit-tap-highlight-color: transparent; }
+body { background:#0B1224; font-family: Inter, -apple-system, sans-serif; overscroll-behavior: none; }
+.glass { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.card { background: linear-gradient(180deg, #1A2442 0%, #151E35 100%); border:1px solid #233154; }
+.card-hover:hover { background: linear-gradient(180deg, #1E2B4A 0%, #1A2442 100%); border-color:#2A3A5E; transform: translateY(-1px); }
+.shadow-glow { box-shadow: 0 0 0 1px rgba(108,124,255,0.1), 0 8px 32px rgba(0,0,0,0.4); }
+.scrollbar-none::-webkit-scrollbar { display:none; }
+.scrollbar-none { -ms-overflow-style:none; scrollbar-width:none; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.timeline-line { position:absolute; left:11px; top:24px; bottom:-12px; width:2px; background:#233154; }
+.timeline-line.last { display:none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+.pulse { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="bg-bg text-white antialiased min-h-screen overflow-x-hidden">
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="min-h-screen flex flex-col">
+  <div class="flex-1 flex flex-col lg:flex-row">
+    <!-- Left: Branding -->
+    <div class="lg:w-[48%] p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-accent/20 via-transparent to-transparent pointer-events-none"></div>
+      <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div>
+        <div class="flex items-center gap-3 mb-16">
+          <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold text-lg">M</div>
+          <span class="font-bold text-xl tracking-tight">MyNote</span>
+          <span class="ml-2 px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-bold tracking-widest">BETA</span>
+        </div>
+        <h1 class="text-[40px] lg:text-[56px] font-[800] leading-[0.95] tracking-[-0.03em] mb-6">Ton école,<br><span class="text-accent2">enfin claire.</span></h1>
+        <p class="text-[18px] leading-[1.5] text-white/60 max-w-[420px]">L'app scolaire que Pronote aurait dû être. Rapide, belle, privée. Connectée à ton vrai compte via Toutatice / EduConnect.</p>
+        
+        <div class="mt-10 grid grid-cols-1 gap-3 max-w-[420px]">
+          <div class="flex gap-3 p-3 rounded-2xl bg-card border border-border">
+            <div class="w-9 h-9 rounded-xl bg-success/20 flex items-center justify-center text-success">✓</div>
+            <div><div class="font-semibold text-[14px]">Connexion officielle</div><div class="text-[13px] text-white/50">Via ton URL Pronote + Toutatice + EduConnect. Aucun mot de passe en clair.</div></div>
+          </div>
+          <div class="flex gap-3 p-3 rounded-2xl bg-card border border-border">
+            <div class="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center">🔒</div>
+            <div><div class="font-semibold text-[14px]">100% local & privé</div><div class="text-[13px] text-white/50">Tes données restent sur ton iPhone. Pas de serveur tiers.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="hidden lg:block text-[12px] text-white/30">Première Générale • Math • Physique-Chimie • SES • Vitré, Bretagne</div>
+    </div>
+
+    <!-- Right: Login Card -->
+    <div class="lg:w-[52%] p-6 lg:p-10 flex items-center justify-center bg-[#0E162C]">
+      <div class="w-full max-w-[480px]">
+        <div class="card rounded-[28px] shadow-glow p-7 lg:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-[22px] font-bold">Se connecter à Pronote</h2>
+            <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-bold tracking-wide">MÉTHODE RÉELLE</span>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="text-[12px] font-semibold text-white/60 tracking-wide uppercase mb-2 block">URL Pronote de ton établissement</label>
+              <input id="pronoteUrl" placeholder="https://035xxxx.index-education.net/pronote/..." class="w-full h-[48px] px-4 rounded-xl bg-[#0B1224] border border-border focus:border-accent focus:outline-none text-[15px] placeholder:text-white/30">
+              <p class="mt-2 text-[12px] text-white/40">Tu la trouveras dans Toutatice > Vie scolaire > Pronote. Ne l'invente pas.</p>
+            </div>
+
+            <button id="btnOpenPronote" class="w-full h-[52px] rounded-xl bg-accent hover:bg-accent2 text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition">
+              <span>↗</span> Ouvrir mon Pronote officiel
+            </button>
+
+            <div class="relative my-5"><div class="h-px bg-border"></div><span class="absolute left-1/2 -translate-x-1/2 -top-2 px-3 bg-[#151E35] text-[11px] text-white/40 tracking-widest">OU MÉTHODE RECOMMANDÉE</span></div>
+
+            <div class="rounded-xl bg-[#0B1224] border border-border p-4">
+              <div class="font-semibold text-[14px] mb-2 flex items-center gap-2">📱 Connexion par QR Code (officiel Pronote)</div>
+              <ol class="text-[13px] text-white/60 space-y-1.5 list-decimal list-inside">
+                <li>Connecte-toi à Pronote via Toutatice dans un autre onglet</li>
+                <li>Va dans <b class="text-white/80">Informations personnelles > Compte > QR Code</b></li>
+                <li>Génère le QR et copie le contenu (ou scanne-le)</li>
+                <li>Colle-le ci-dessous → MyNote récupère tes vraies données</li>
+              </ol>
+              <textarea id="qrInput" placeholder="Colle ici le contenu du QR Code Pronote..." class="mt-3 w-full h-[84px] p-3 rounded-xl bg-[#151E35] border border-border text-[12px] font-mono placeholder:text-white/30 resize-none"></textarea>
+              <button id="btnConnectQR" class="mt-3 w-full h-[44px] rounded-xl bg-white text-black font-semibold text-[14px] hover:bg-white/90 transition">Se connecter avec ce QR Code</button>
+              <p class="mt-2 text-[11px] text-white/30">Le QR contient tes identifiants Pronote chiffrés. Il reste en local, jamais envoyé à un serveur tiers (sauf ton propre backend si tu en déploies un).</p>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+              <button id="btnDemo" class="flex-1 h-[44px] rounded-xl bg-white/10 hover:bg-white/15 border border-border font-medium text-[14px]">Continuer en mode démo</button>
+              <button id="btnLocal" class="flex-1 h-[44px] rounded-xl bg-transparent hover:bg-white/5 border border-border font-medium text-[14px]">Mode local vide</button>
+            </div>
+
+            <div class="rounded-xl bg-accent/10 border border-accent/20 p-3 flex gap-3">
+              <div class="text-accent2 mt-0.5">ℹ️</div>
+              <div class="text-[12px] leading-[1.5] text-white/70"><b class="text-white">Transparence :</b> Sans ton URL + QR Code, MyNote ne peut pas afficher tes vraies données. Le mode démo utilise des données fictives clairement étiquetées et ne prétend jamais être réel. Voir <a href="#" onclick="document.getElementById('analysisModal').classList.remove('hidden')" class="underline text-accent2">l'analyse technique</a>.</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-center text-[11px] text-white/30">MyNote n'est pas affilié à Index-Education. Pronote est une marque déposée.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden min-h-screen flex-col">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-30 glass bg-bg/80 border-b border-border">
+    <div class="max-w-[1440px] mx-auto px-4 lg:px-6 h-[64px] flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center font-bold">M</div>
+        <div class="hidden lg:block">
+          <div class="font-bold leading-none">MyNote</div>
+          <div class="text-[11px] text-white/40 flex items-center gap-1.5"><span id="syncDot" class="dot bg-success"></span><span id="syncText">Synchronisé il y a 2 min</span></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="demoBadge" class="hidden px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-bold">MODE DÉMO • DONNÉES FICTIVES</div>
+        <button id="btnNotif" class="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center">🔔</button>
+        <button id="btnLogout" class="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center">⎋</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 max-w-[1440px] mx-auto w-full flex">
+    <!-- Desktop sidebar -->
+    <aside class="hidden lg:block w-[260px] p-4 sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto scrollbar-none">
+      <nav id="desktopNav" class="space-y-1"></nav>
+      <div class="mt-6 p-4 rounded-2xl card">
+        <div class="text-[11px] font-bold tracking-widest text-white/40 uppercase mb-3">Widgets iPhone</div>
+        <div class="space-y-2 text-[12px]">
+          <div class="p-2.5 rounded-xl bg-bg border border-border flex gap-2"><span>📚</span><div><div class="font-semibold">Prochain cours</div><div class="text-white/50">Mathématiques<br>09:00 • Salle B204</div></div></div>
+          <div class="p-2.5 rounded-xl bg-bg border border-border"><div class="font-semibold">Aujourd'hui</div><div class="text-white/50">3 cours • 1 devoir • Aucune absence</div></div>
+          <div class="p-2.5 rounded-xl bg-bg border border-border"><div class="font-semibold">Moyenne générale</div><div class="text-xl font-bold">15,2 <span class="text-[12px] font-normal text-white/50">/20</span></div></div>
+        </div>
+        <div class="mt-3 text-[11px] text-white/30">Écran verrouillé • Tes infos même sans ouvrir l'app</div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 p-4 lg:p-6 pb-[88px] lg:pb-6">
+      <!-- ACCUEIL -->
+      <section id="page-accueil" class="page">
+        <div class="mb-6">
+          <h1 class="text-[28px] font-[800] tracking-tight">Salut Noah 👋</h1>
+          <p class="text-white/50 text-[14px] mt-1" id="currentDate">Lundi 14 avril 2025 • Semaine B</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div class="xl:col-span-2 space-y-4">
+            <!-- Prochain cours -->
+            <div class="card rounded-[20px] p-5">
+              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">Prochain cours</h2><span class="px-2.5 py-1 rounded-full bg-accent/20 text-accent2 text-[11px] font-bold">Dans 37 min</span></div>
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-xl">∑</div>
+                <div class="flex-1">
+                  <div class="font-bold text-[16px]">Mathématiques</div>
+                  <div class="text-[13px] text-white/60">M. Dupont • Salle B204</div>
+                  <div class="text-[13px] text-white/40 mt-1">09:00 → 10:00</div>
+                </div>
+                <div class="hidden sm:flex items-center"><div class="w-10 h-10 rounded-full border-2 border-accent flex items-center justify-center text-[11px] font-bold">37'</div></div>
+              </div>
+            </div>
+
+            <!-- Aujourd'hui -->
+            <div class="card rounded-[20px] p-5">
+              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">Aujourd'hui</h2><button class="text-[12px] text-accent2">Voir tout</button></div>
+              <div id="todayTimeline" class="relative space-y-0"></div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <!-- À faire -->
+            <div class="card rounded-[20px] p-5">
+              <div class="flex items-center justify-between mb-4"><h2 class="font-bold">À faire</h2><span id="todoCount" class="text-[12px] text-white/40">3 devoirs</span></div>
+              <div id="todoList" class="space-y-2.5"></div>
+              <button onclick="navigate('devoirs')" class="mt-4 w-full h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-border text-[13px] font-medium">Voir tous les devoirs</button>
+            </div>
+
+            <!-- Moyenne + Notes récentes -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="card rounded-[20px] p-4">
+                <div class="text-[11px] text-white/40 uppercase font-bold tracking-wide">Moyenne générale</div>
+                <div class="text-[28px] font-[800] mt-1">15,2<span class="text-[14px] font-medium text-white/40">/20</span></div>
+                <div class="mt-2 h-[32px] flex items-end gap-[3px]"><div class="flex-1 bg-white/10 rounded-full" style="height:60%"></div><div class="flex-1 bg-white/10 rounded-full" style="height:75%"></div><div class="flex-1 bg-accent rounded-full" style="height:92%"></div></div>
+                <div class="text-[11px] text-success mt-1">↗ +0,3 ce mois</div>
+              </div>
+              <div class="card rounded-[20px] p-4">
+                <div class="text-[11px] text-white/40 uppercase font-bold tracking-wide">Notes récentes</div>
+                <div class="mt-3 space-y-2 text-[13px]">
+                  <div class="flex justify-between"><span>Maths</span><span class="font-bold text-success">16/20</span></div>
+                  <div class="flex justify-between"><span>Physique</span><span class="font-bold">14,5/20</span></div>
+                  <div class="flex justify-between"><span>SES</span><span class="font-bold text-success">17/20</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spés -->
+            <div class="card rounded-[20px] p-4 border-accent/30">
+              <div class="text-[11px] font-bold tracking-widest text-accent2 uppercase mb-2">Tes spécialités • Première</div>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1.5 rounded-full bg-accent text-white text-[12px] font-semibold">Mathématiques</span>
+                <span class="px-3 py-1.5 rounded-full bg-[#2A3A5E] border border-border text-[12px]">Physique-Chimie</span>
+                <span class="px-3 py-1.5 rounded-full bg-[#2A3A5E] border border-border text-[12px]">SES</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EMPLOI DU TEMPS -->
+      <section id="page-edt" class="page hidden">
+        <div class="flex items-center justify-between mb-5">
+          <h1 class="text-[24px] font-bold">Emploi du temps</h1>
+          <div class="flex gap-1 p-1 rounded-xl bg-card border border-border">
+            <button data-edt="today" class="edtTab px-3 py-1.5 rounded-lg bg-accent text-white text-[13px] font-medium">Aujourd'hui</button>
+            <button data-edt="tomorrow" class="edtTab px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Demain</button>
+            <button data-edt="week" class="edtTab px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Semaine</button>
+          </div>
+        </div>
+        <div class="text-[13px] text-white/50 mb-4" id="edtDate">Lundi 14 avril 2025</div>
+        <div id="edtList" class="space-y-3"></div>
+        <div class="mt-4 p-3 rounded-xl bg-[#0B1224] border border-border text-[12px] text-white/40 flex gap-2"><span>ℹ️</span><span>Aucun changement prévu pour aujourd'hui • Données synchronisées depuis Pronote</span></div>
+      </section>
+
+      <!-- NOTES -->
+      <section id="page-notes" class="page hidden">
+        <div class="flex items-center justify-between mb-5">
+          <h1 class="text-[24px] font-bold">Notes</h1>
+          <div class="flex gap-1 p-1 rounded-xl bg-card border border-border">
+            <button class="px-3 py-1.5 rounded-lg bg-accent text-white text-[13px]">Matières</button>
+            <button onclick="navigate('moyennes')" class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Moyennes</button>
+          </div>
+        </div>
+        <div id="notesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <div class="mt-6 card rounded-[20px] p-5">
+          <div class="flex items-center justify-between"><h3 class="font-bold">Moyenne générale</h3><span class="text-[12px] text-success">↗ +0,3</span></div>
+          <div class="text-[32px] font-[800] mt-2">15,2 <span class="text-[16px] text-white/40">/20</span></div>
+          <canvas id="avgChart" height="80" class="w-full mt-3"></canvas>
+        </div>
+      </section>
+
+      <!-- DEVOIRS -->
+      <section id="page-devoirs" class="page hidden">
+        <div class="flex items-center justify-between mb-5">
+          <h1 class="text-[24px] font-bold">Devoirs</h1>
+          <button id="btnAddHomework" class="h-9 px-4 rounded-xl bg-accent text-white text-[13px] font-medium">+ Ajouter un devoir</button>
+        </div>
+        <div class="flex gap-2 mb-4 overflow-x-auto scrollbar-none">
+          <button data-filter="all" class="filterBtn px-3.5 py-2 rounded-full bg-accent text-white text-[13px] whitespace-nowrap">Tout</button>
+          <button data-filter="today" class="filterBtn px-3.5 py-2 rounded-full bg-card border border-border text-[13px] whitespace-nowrap">Aujourd'hui</button>
+          <button data-filter="tomorrow" class="filterBtn px-3.5 py-2 rounded-full bg-card border border-border text-[13px] whitespace-nowrap">Demain</button>
+          <button data-filter="week" class="filterBtn px-3.5 py-2 rounded-full bg-card border border-border text-[13px] whitespace-nowrap">Semaine</button>
+        </div>
+        <div id="homeworkList" class="space-y-3"></div>
+      </section>
+
+      <!-- CALENDRIER -->
+      <section id="page-calendrier" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Calendrier</h1>
+        <div class="card rounded-[20px] p-5">
+          <div class="flex items-center justify-between mb-4"><h3 class="font-bold">Avril 2025</h3><div class="flex gap-1"><button class="w-7 h-7 rounded-lg bg-bg border border-border">‹</button><button class="w-7 h-7 rounded-lg bg-bg border border-border">›</button></div></div>
+          <div class="grid grid-cols-7 gap-1 text-[11px] text-white/40 mb-2"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+          <div class="grid grid-cols-7 gap-1">
+            <div class="h-9 rounded-xl bg-accent text-white flex items-center justify-center font-bold text-[13px]">14</div>
+            <div class="h-9 rounded-xl bg-bg border border-border flex items-center justify-center text-[13px]">15</div>
+            <div class="h-9 rounded-xl bg-bg border border-border flex items-center justify-center text-[13px]">16</div>
+            <div class="h-9 rounded-xl flex items-center justify-center text-[13px] text-white/40">17</div>
+            <div class="h-9 rounded-xl flex items-center justify-center text-[13px] text-white/40">18</div>
+            <div class="h-9 rounded-xl flex items-center justify-center text-[13px] text-white/40">19</div>
+            <div class="h-9 rounded-xl flex items-center justify-center text-[13px] text-white/40">20</div>
+          </div>
+          <div class="mt-6">
+            <div class="font-bold text-[14px] mb-3">Lundi 14 avril</div>
+            <div id="calendarDay" class="space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABSENCES -->
+      <section id="page-absences" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Absences / Retards</h1>
+        <div class="flex gap-1 p-1 rounded-xl bg-card border border-border w-fit mb-4"><button class="px-3 py-1.5 rounded-lg bg-accent text-white text-[13px]">Absences</button><button class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Retards</button></div>
+        <div id="absenceList" class="space-y-3"></div>
+        <div class="mt-6 card rounded-[20px] p-4 flex justify-between text-[13px]"><div><div class="text-white/40">Total</div><div>Absences</div><div>Retards</div></div><div class="text-right"><div class="text-white/40">&nbsp;</div><div>2</div><div>1</div></div></div>
+      </section>
+
+      <!-- CAHIER DE TEXTES -->
+      <section id="page-cahier" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Cahier de textes</h1>
+        <div class="flex gap-1 p-1 rounded-xl bg-card border border-border w-fit mb-4"><button class="px-3 py-1.5 rounded-lg bg-accent text-white text-[13px]">Mes cours</button><button class="px-3 py-1.5 rounded-lg text-white/60 text-[13px]">Par date</button></div>
+        <div class="text-[13px] text-white/50 mb-3">Lundi 14 avril 2025</div>
+        <div id="cahierList" class="space-y-3"></div>
+      </section>
+
+      <!-- MOYENNES -->
+      <section id="page-moyennes" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Moyennes</h1>
+        <div class="card rounded-[20px] p-5 mb-4">
+          <div class="text-[13px] text-white/50">Moyenne générale</div>
+          <div class="text-[36px] font-[800]">15,2 <span class="text-[18px] text-white/40">/20</span></div>
+          <div class="mt-4 h-[100px] relative">
+            <svg viewBox="0 0 300 80" class="w-full h-full"><polyline fill="none" stroke="#6C7CFF" stroke-width="2.5" points="0,60 60,50 120,40 180,35 240,20 300,15"/><circle cx="300" cy="15" r="4" fill="#6C7CFF"/></svg>
+            <div class="flex justify-between text-[11px] text-white/30 mt-1"><span>12,8</span><span>13,7</span><span>14,6</span><span>15,2</span></div>
+          </div>
+        </div>
+        <div class="card rounded-[20px] p-5">
+          <div class="font-bold mb-4">Moyennes par matière</div>
+          <div id="averagesList" class="space-y-4"></div>
+        </div>
+      </section>
+
+      <!-- NOTIFICATIONS -->
+      <section id="page-notifications" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Notifications</h1>
+        <div class="card rounded-[20px] p-2 divide-y divide-border">
+          <div class="flex items-center justify-between p-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-[14px]">📚</div><div><div class="font-medium text-[14px]">Prochain cours</div><div class="text-[12px] text-white/40">15 min avant</div></div></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#233154] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div></label></div>
+          <div class="flex items-center justify-between p-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center">📝</div><div><div class="font-medium text-[14px]">Devoirs à échéance</div></div></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#233154] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div></label></div>
+          <div class="flex items-center justify-between p-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center">✨</div><div><div class="font-medium text-[14px]">Nouveau devoir</div></div></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#233154] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div></label></div>
+          <div class="flex items-center justify-between p-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center">🎯</div><div><div class="font-medium text-[14px]">Nouvelle note</div></div></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked class="sr-only peer"><div class="w-11 h-6 bg-[#233154] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div></label></div>
+        </div>
+        <div class="mt-4 card rounded-[20px] p-4 flex items-center justify-between"><div><div class="font-medium text-[14px]">Mode silencieux</div><div class="text-[12px] text-white/40">De 22:00 à 07:00</div></div><div class="w-11 h-6 bg-[#233154] rounded-full relative"><div class="absolute top-[2px] left-[2px] w-5 h-5 bg-white/60 rounded-full"></div></div></div>
+      </section>
+
+      <!-- PARAMETRES -->
+      <section id="page-parametres" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Paramètres</h1>
+        <div class="space-y-4">
+          <div class="card rounded-[20px] p-5">
+            <div class="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-3">Apparence</div>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between"><span class="text-[14px]">Thème</span><span class="text-[13px] text-white/50">Sombre</span></div>
+              <div class="flex items-center justify-between"><span class="text-[14px]">Couleur principale</span><div class="w-5 h-5 rounded-full bg-accent"></div></div>
+              <div class="flex items-center justify-between"><span class="text-[14px]">Mode système</span><div class="w-11 h-6 bg-accent rounded-full relative"><div class="absolute top-[2px] right-[2px] w-5 h-5 bg-white rounded-full"></div></div></div>
+              <div class="flex items-center justify-between"><span class="text-[14px]">Afficher les graphiques</span><div class="w-11 h-6 bg-accent rounded-full relative"><div class="absolute top-[2px] right-[2px] w-5 h-5 bg-white rounded-full"></div></div></div>
+            </div>
+          </div>
+          <div class="card rounded-[20px] p-5">
+            <div class="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-3">Compte</div>
+            <div class="text-[13px] space-y-2">
+              <div>URL Pronote : <span id="settingsUrl" class="text-white/50 font-mono text-[12px]">Non configurée</span></div>
+              <div>Dernière synchro : <span id="settingsSync" class="text-white/50">Jamais</span></div>
+            </div>
+            <button onclick="document.getElementById('analysisModal').classList.remove('hidden')" class="mt-4 w-full h-10 rounded-xl bg-white/5 border border-border text-[13px]">Voir l'analyse technique de connexion</button>
+          </div>
+          <div class="card rounded-[20px] p-5 border-amber-500/20">
+            <div class="font-bold text-[14px] mb-2">Mode démo</div>
+            <div class="text-[13px] text-white/60">Teste toutes les fonctionnalités avec des données fictives. Ces données sont clairement étiquetées et ne prétendent jamais être réelles.</div>
+            <div class="mt-3 flex gap-2"><button id="toggleDemo" class="px-4 h-9 rounded-xl bg-amber-500/20 text-amber-300 text-[13px] font-medium">Activer / Désactiver</button><span id="demoStatus" class="text-[12px] text-white/40 py-2">Activé</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLUS -->
+      <section id="page-plus" class="page hidden">
+        <h1 class="text-[24px] font-bold mb-5">Plus</h1>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="navigate('browser')" class="card rounded-[20px] p-4 text-left card-hover border-accent/40 bg-accent/5"><div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3">🌐</div><div class="font-semibold text-[14px]">Navigateur Pronote</div><div class="text-[12px] text-white/40">Toutatice + EduConnect</div></button>
+          <button onclick="navigate('moyennes')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center mb-3">📊</div><div class="font-semibold text-[14px]">Moyennes</div><div class="text-[12px] text-white/40">Générale et par matière</div></button>
+          <button onclick="navigate('absences')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-danger/20 flex items-center justify-center mb-3">⚠️</div><div class="font-semibold text-[14px]">Absences</div><div class="text-[12px] text-white/40">Ton historique</div></button>
+          <button onclick="navigate('cahier')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center mb-3">📖</div><div class="font-semibold text-[14px]">Cahier de textes</div><div class="text-[12px] text-white/40">Contenu des cours</div></button>
+          <button onclick="navigate('calendrier')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center mb-3">📅</div><div class="font-semibold text-[14px]">Calendrier</div><div class="text-[12px] text-white/40">Cours & événements</div></button>
+          <button onclick="navigate('notifications')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">🔔</div><div class="font-semibold text-[14px]">Notifications</div><div class="text-[12px] text-white/40">Reste informé</div></button>
+          <button onclick="navigate('parametres')" class="card rounded-[20px] p-4 text-left card-hover"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">⚙️</div><div class="font-semibold text-[14px]">Paramètres</div><div class="text-[12px] text-white/40">Personnalise</div></button>
+        </div>
+      </section>
+
+      <!-- BROWSER - VRAI NAVIGATEUR PRONOTE / TOUTATICE -->
+      <section id="page-browser" class="page hidden h-[calc(100vh-120px)] lg:h-[calc(100vh-88px)] flex flex-col -m-4 lg:-m-6">
+        <!-- Browser toolbar -->
+        <div class="bg-[#151E35] border-b border-border p-2 flex items-center gap-2">
+          <div class="flex items-center gap-1">
+            <button onclick="browserBack()" class="w-8 h-8 rounded-lg bg-[#0B1224] border border-border flex items-center justify-center hover:bg-white/10">←</button>
+            <button onclick="browserForward()" class="w-8 h-8 rounded-lg bg-[#0B1224] border border-border flex items-center justify-center hover:bg-white/10">→</button>
+            <button onclick="browserRefresh()" class="w-8 h-8 rounded-lg bg-[#0B1224] border border-border flex items-center justify-center hover:bg-white/10">↻</button>
+          </div>
+          <div class="flex-1 flex items-center gap-2 bg-[#0B1224] border border-border rounded-xl px-3 h-9 focus-within:border-accent">
+            <span class="text-[12px]">🔒</span>
+            <input id="browserUrlInput" type="text" placeholder="https://www.toutatice.fr ou ton URL Pronote..." class="flex-1 bg-transparent outline-none text-[13px] placeholder:text-white/30" onkeydown="if(event.key==='Enter') browserGo()">
+            <button id="browserGoBtn" onclick="browserGo()" class="px-3 py-1 rounded-lg bg-accent text-white text-[12px] font-medium">Aller</button>
+          </div>
+          <button onclick="browserClear()" class="w-8 h-8 rounded-lg bg-[#0B1224] border border-border flex items-center justify-center hover:bg-white/10 text-[12px]" title="Effacer cookies">🗑️</button>
+          <button onclick="navigate('accueil')" class="hidden lg:flex w-8 h-8 rounded-lg bg-[#0B1224] border border-border items-center justify-center hover:bg-white/10">✕</button>
+        </div>
+        
+        <!-- Quick links -->
+        <div class="bg-[#0E162C] border-b border-border px-3 py-2 flex gap-2 overflow-x-auto scrollbar-none">
+          <button onclick="browserNavigate('https://www.toutatice.fr')" class="px-3 py-1.5 rounded-full bg-accent/20 text-accent2 text-[12px] font-medium whitespace-nowrap">Toutatice</button>
+          <button onclick="browserNavigate('https://educonnect.education.gouv.fr')" class="px-3 py-1.5 rounded-full bg-card border border-border text-[12px] whitespace-nowrap">EduConnect</button>
+          <button id="quickPronoteBtn" onclick="if(state.pronoteUrl) browserNavigate(state.pronoteUrl); else alert('Renseigne ton URL Pronote dans Paramètres')" class="px-3 py-1.5 rounded-full bg-card border border-border text-[12px] whitespace-nowrap">Mon Pronote</button>
+          <span class="text-[11px] text-white/30 py-1.5 ml-2">Proxy MyNote actif • X-Frame-Options supprimé • Cookies conservés</span>
+        </div>
+
+        <!-- Iframe -->
+        <div class="flex-1 relative bg-white">
+          <div id="browserLoading" class="absolute inset-0 bg-[#0B1224] flex flex-col items-center justify-center z-10">
+            <div class="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center mb-4 animate-pulse">🌐</div>
+            <div class="font-bold">Navigateur MyNote</div>
+            <div class="text-[13px] text-white/50 mt-1 text-center max-w-[320px]">Tape ton URL Toutatice ou Pronote ci-dessus.<br>Tu pourras te connecter avec ton compte EduConnect directement ici.</div>
+            <div class="mt-6 grid grid-cols-1 gap-2 w-[300px]">
+              <button onclick="browserNavigate('https://www.toutatice.fr')" class="h-11 rounded-xl bg-card border border-border text-[13px] font-medium">Aller sur Toutatice</button>
+              <div class="text-[11px] text-white/30 text-center">Ou colle ton URL Pronote :<br><span class="font-mono text-white/50">https://035xxxx.index-education.net/pronote/</span></div>
+            </div>
+          </div>
+          <iframe id="browserFrame" class="w-full h-full border-0 bg-white" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-top-navigation-by-user-activation"></iframe>
+        </div>
+
+        <!-- Bottom info -->
+        <div class="bg-[#151E35] border-t border-border px-4 py-2 flex items-center justify-between text-[11px] text-white/40">
+          <span id="browserStatus">Prêt • Proxy sécurisé local • Aucun mot de passe envoyé à un tiers</span>
+          <span class="hidden lg:inline">MyNote Browser • Basé sur Express + Cheerio • Cookies chiffrés côté serveur</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass bg-[#0B1224]/90 border-t border-border">
+    <div class="flex justify-around items-center h-[72px] px-2">
+      <button data-nav="accueil" class="navBtn flex flex-col items-center gap-1 min-w-[56px]"><span class="w-6 h-6 flex items-center justify-center rounded-lg bg-accent text-white">🏠</span><span class="text-[10px] font-medium text-white">Accueil</span></button>
+      <button data-nav="edt" class="navBtn flex flex-col items-center gap-1 min-w-[56px]"><span class="w-6 h-6 flex items-center justify-center text-white/50">📅</span><span class="text-[10px] text-white/50">EDT</span></button>
+      <button data-nav="notes" class="navBtn flex flex-col items-center gap-1 min-w-[56px]"><span class="w-6 h-6 flex items-center justify-center text-white/50">📝</span><span class="text-[10px] text-white/50">Notes</span></button>
+      <button data-nav="devoirs" class="navBtn flex flex-col items-center gap-1 min-w-[56px]"><span class="w-6 h-6 flex items-center justify-center text-white/50">📚</span><span class="text-[10px] text-white/50">Devoirs</span></button>
+      <button data-nav="plus" class="navBtn flex flex-col items-center gap-1 min-w-[56px]"><span class="w-6 h-6 flex items-center justify-center text-white/50">•••</span><span class="text-[10px] text-white/50">Plus</span></button>
+    </div>
+  </nav>
+</div>
+
+<!-- Analysis Modal -->
+<div id="analysisModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+  <div class="max-w-[720px] mx-auto my-10 card rounded-[24px] p-6 lg:p-8">
+    <div class="flex justify-between items-start mb-6"><h2 class="text-[20px] font-bold">Analyse technique réelle</h2><button onclick="this.closest('#analysisModal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">✕</button></div>
+    <div class="prose prose-invert prose-sm max-w-none text-[13px] leading-[1.6] text-white/70">
+      <p><b class="text-white">MyNote → Pronote → Toutatice → EduConnect → MyNote</b> : le retour automatique avec <code>my-note://auth/callback</code> est <b class="text-amber-300">impossible</b> car Toutatice (CAS) et Pronote ne whitelist pas d'URL tierce.</p>
+      <p class="mt-3"><b class="text-white">Méthode officielle qui marche :</b> QR Code mobile. L'utilisateur se connecte normalement via Toutatice, va dans Informations personnelles > QR Code, et MyNote scanne ce QR qui contient les identifiants chiffrés. C'est ce que fait Papillon.</p>
+      <p class="mt-3"><b class="text-white">Pour ce site web :</b> on ne peut pas intercepter les cookies cross-domain depuis JS (CORS). Il faut un backend proxy Node.js avec <code>pronote-api-papillon</code> qui fait le chiffrement AES et maintient la session. Le frontend envoie le QR au backend, le backend renvoie les vraies données.</p>
+      <p class="mt-3">Sans backend, MyNote fonctionne en local (devoirs perso, EDT manuel) et est prêt à recevoir les vraies données dès que tu fournis ton URL + QR.</p>
+      <pre class="mt-4 p-3 rounded-xl bg-black/50 text-[11px] overflow-x-auto">const session = await login(pronoteUrl, qr.username, qr.password, 'toutatice')
+const timetable = await session.timetable()
+const marks = await session.marks()</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- DATA (demo, clearly labeled) ---
+const demoData = {
+  timetable: [
+    { id:1, subject:'Physique-Chimie', teacher:'M. Martin', room:'Salle B101', start:'08:00', end:'09:00', color:'bg-emerald-500', icon:'🧪', status:'done' },
+    { id:2, subject:'Mathématiques', teacher:'M. Dupont', room:'Salle B204', start:'09:00', end:'10:00', color:'bg-accent', icon:'∑', status:'current', special:true },
+    { id:3, subject:'SES', teacher:'Mme Leroy', room:'Salle A203', start:'10:00', end:'11:00', color:'bg-amber-500', icon:'📈' },
+    { id:4, subject:'Français', teacher:'M. Bernard', room:'Salle C102', start:'13:30', end:'15:00', color:'bg-pink-500', icon:'📖' },
+    { id:5, subject:'Histoire-Géographie', teacher:'Mme Petit', room:'Salle B205', start:'15:00', end:'17:00', color:'bg-orange-500', icon:'🌍' },
+  ],
+  homeworks: [
+    { id:1, subject:'Mathématiques', title:'Exercice 42', due:'Demain', coeff:'Coef. 3', done:false, color:'bg-accent', priority:'high' },
+    { id:2, subject:'Physique-Chimie', title:'Compte rendu', due:'Lundi', done:false, color:'bg-emerald-500' },
+    { id:3, subject:'Espagnol', title:'Apprendre vocabulaire', due:'Mardi • Coef. 1', done:false, color:'bg-amber-500' },
+    { id:4, subject:'Français', title:'Lecture chapitre 4', due:"Aujourd'hui", done:true, color:'bg-pink-500' },
+    { id:5, subject:'Histoire-Géographie', title:'Fiche de révision', due:"Aujourd'hui", done:true, color:'bg-orange-500' },
+  ],
+  grades: [
+    { subject:'Mathématiques', avg:'15,8', coeff:'7', color:'bg-accent', grades:['16','15,5','16,5'] },
+    { subject:'Physique-Chimie', avg:'14,7', coeff:'6', color:'bg-emerald-500' },
+    { subject:'SES', avg:'16,1', coeff:'5', color:'bg-amber-500', special:true },
+    { subject:'Français', avg:'13,4', coeff:'4', color:'bg-pink-500' },
+    { subject:'Histoire-Géographie', avg:'15,2', coeff:'3', color:'bg-orange-500' },
+    { subject:'Espagnol', avg:'17,3', coeff:'3', color:'bg-violet-500' },
+  ],
+  absences: [
+    { date:'Vendredi 21 mars 2025', type:'Absence justifiée', reason:'(Maladie)', icon:'🟠' },
+    { date:'Mardi 4 mars 2025', type:'Absence non justifiée', reason:'(Non présenté)', icon:'❌' },
+    { date:'Lundi 17 février 2025', type:'Retard', reason:'(8 min)', icon:'🕐' },
+  ],
+  cahier: [
+    { subject:'Mathématiques', teacher:'M. Dupont • Salle B204', content:'Exercices 41 et 42 à faire pour demain.', color:'bg-accent' },
+    { subject:'Physique-Chimie', teacher:'M. Martin • Salle B101', content:'Chapitre 5 : Les réactions chimiques.', color:'bg-emerald-500' },
+    { subject:'Français', teacher:'M. Bernard • Salle C102', content:'Lecture du chapitre 4 et questions.', color:'bg-pink-500' },
+    { subject:'Histoire-Géographie', teacher:'Mme Petit • Salle B205', content:'Révision sur la Seconde Guerre mondiale.', color:'bg-orange-500' },
+  ]
+};
+
+let state = JSON.parse(localStorage.getItem('mynote_state') || 'null') || {
+  isDemo: true,
+  pronoteUrl: '',
+  lastSync: Date.now() - 2*60*1000,
+  customHomeworks: []
+};
+
+function saveState(){ localStorage.setItem('mynote_state', JSON.stringify(state)); }
+
+function formatSync(){
+  const diff = Date.now() - state.lastSync;
+  const mins = Math.floor(diff/60000);
+  if(mins<1) return 'Synchronisé à l’instant';
+  if(mins<60) return `Synchronisé il y a ${mins} min`;
+  const hours = Math.floor(mins/60);
+  return `Dernière synchro il y a ${hours} h`;
+}
+
+// --- RENDER FUNCTIONS ---
+function renderToday(){
+  const c = document.getElementById('todayTimeline');
+  c.innerHTML = demoData.timetable.map((t,i)=>`
+    <div class="relative flex gap-4 pb-6 ${t.status==='current'?'':'opacity-90'}">
+      <div class="timeline-line ${i===demoData.timetable.length-1?'last':''}"></div>
+      <div class="relative z-10 w-[22px] h-[22px] rounded-full border-2 ${t.status==='current'?'bg-accent border-accent':'bg-bg border-border'} flex items-center justify-center flex-shrink-0 mt-0.5">
+        ${t.status==='done'?'<span class="text-[10px]">✓</span>':t.status==='current'?'<span class="w-2 h-2 bg-white rounded-full pulse block"></span>':''}
+      </div>
+      <div class="flex-1 -mt-1">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-[12px] text-white/40 font-mono">${t.start} - ${t.end}</div>
+            <div class="font-semibold text-[14px] mt-0.5 flex items-center gap-2">${t.subject} ${t.special?'<span class="px-1.5 py-0.5 rounded bg-accent/20 text-accent2 text-[10px]">SPÉ</span>':''}</div>
+            <div class="text-[12px] text-white/50">${t.teacher} • ${t.room}</div>
+          </div>
+          <div class="w-8 h-8 rounded-xl ${t.color} flex items-center justify-center text-[14px]">${t.icon}</div>
+        </div>
+        ${t.status==='current'?'<div class="mt-2 inline-flex px-2.5 py-1 rounded-full bg-accent/15 text-accent2 text-[11px] font-bold">● Cours actuel</div>':''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTodos(){
+  const all = [...demoData.homeworks.filter(h=>!h.done), ...state.customHomeworks];
+  document.getElementById('todoCount').textContent = `${all.length} devoirs`;
+  document.getElementById('todoList').innerHTML = all.slice(0,3).map(h=>`
+    <div class="flex gap-3 p-2.5 rounded-xl bg-[#0B1224] border border-border">
+      <div class="w-8 h-8 rounded-lg ${h.color||'bg-accent'} flex items-center justify-center text-white text-[12px] font-bold">${h.subject[0]}</div>
+      <div class="flex-1 min-w-0"><div class="text-[13px] font-medium truncate">${h.subject} - ${h.title}</div><div class="text-[11px] text-white/40">${h.due}</div></div>
+      <div class="w-5 h-5 rounded-full border border-border flex items-center justify-center">${h.done?'✓':''}</div>
+    </div>
+  `).join('') || '<div class="text-[13px] text-white/40">Aucun devoir — profite !</div>';
+}
+
+function renderEDT(){
+  document.getElementById('edtList').innerHTML = demoData.timetable.map(t=>`
+    <div class="card rounded-[16px] p-4 flex gap-4 ${t.status==='current'?'border-accent/50':''}">
+      <div class="text-[12px] font-mono text-white/40 w-[90px]">${t.start} - ${t.end}</div>
+      <div class="w-9 h-9 rounded-xl ${t.color} flex items-center justify-center flex-shrink-0">${t.icon}</div>
+      <div class="flex-1"><div class="font-semibold text-[14px]">${t.subject} ${t.status==='current'?'<span class="ml-2 px-2 py-0.5 rounded-full bg-accent text-white text-[10px]">Cours actuel</span>':''}</div><div class="text-[12px] text-white/50">${t.teacher} • ${t.room}</div></div>
+      <div class="w-6 h-6 rounded-full border border-border flex items-center justify-center text-[10px]">${t.status==='done'?'✓':''}</div>
+    </div>
+  `).join('');
+  document.getElementById('calendarDay').innerHTML = demoData.timetable.map(t=>`
+    <div class="flex gap-3"><div class="text-[12px] font-mono text-white/40 w-[44px]">${t.start}</div><div class="w-1 rounded-full ${t.color}"></div><div class="flex-1 flex justify-between"><div><div class="text-[13px] font-medium">${t.subject}</div><div class="text-[11px] text-white/40">${t.room}</div></div><div class="text-[11px] text-white/30">${t.teacher}</div></div></div>
+  `).join('');
+}
+
+function renderNotes(){
+  document.getElementById('notesGrid').innerHTML = demoData.grades.map(g=>`
+    <div class="card rounded-[18px] p-4 card-hover cursor-pointer">
+      <div class="flex items-center gap-2 mb-2"><div class="w-7 h-7 rounded-lg ${g.color} flex items-center justify-center text-[12px] font-bold">${g.subject[0]}</div><div class="font-semibold text-[13px]">${g.subject}</div></div>
+      <div class="text-[22px] font-bold">${g.avg} <span class="text-[12px] font-normal text-white/40">/20</span></div>
+      <div class="text-[11px] text-white/40">Coef. ${g.coeff} ${g.special?'• Spé':''}</div>
+    </div>
+  `).join('');
+  document.getElementById('averagesList').innerHTML = demoData.grades.map(g=>`
+    <div><div class="flex justify-between text-[13px] mb-1.5"><span>${g.subject}</span><span class="font-bold">${g.avg}</span></div><div class="h-2 rounded-full bg-bg border border-border overflow-hidden"><div class="h-full ${g.color} rounded-full" style="width:${(parseFloat(g.avg.replace(',','.'))/20*100)}%"></div></div></div>
+  `).join('');
+}
+
+function renderHomeworks(filter='all'){
+  let list = [...demoData.homeworks, ...state.customHomeworks];
+  if(filter==='today') list = list.filter(h=>h.due.includes("Aujourd'hui"));
+  if(filter==='tomorrow') list = list.filter(h=>h.due.includes('Demain'));
+  document.getElementById('homeworkList').innerHTML = list.map(h=>`
+    <div class="card rounded-[18px] p-4 flex gap-3 ${h.done?'opacity-60':''}">
+      <div class="w-10 h-10 rounded-xl ${h.color} flex items-center justify-center text-white font-bold">${h.subject[0]}</div>
+      <div class="flex-1"><div class="font-semibold text-[14px]">${h.subject}</div><div class="text-[13px] text-white/70">${h.title}</div><div class="text-[11px] text-white/40 mt-1">${h.due} ${h.coeff?`• ${h.coeff}`:''}</div></div>
+      <button onclick="toggleHomework(${h.id})" class="w-7 h-7 rounded-full border-2 ${h.done?'bg-success border-success text-white':'border-border'} flex items-center justify-center text-[12px]">${h.done?'✓':''}</button>
+    </div>
+  `).join('') || '<div class="card rounded-[18px] p-8 text-center text-white/40 text-[14px]">Aucun devoir dans ce filtre 🎉</div>';
+}
+
+function renderAbsences(){
+  document.getElementById('absenceList').innerHTML = demoData.absences.map(a=>`
+    <div class="card rounded-[18px] p-4 flex gap-3"><div class="w-9 h-9 rounded-xl bg-[#1E2B4A] border border-border flex items-center justify-center">${a.icon}</div><div><div class="font-medium text-[13px]">${a.date}</div><div class="text-[13px]">${a.type}</div><div class="text-[12px] text-white/40">${a.reason}</div></div></div>
+  `).join('');
+}
+
+function renderCahier(){
+  document.getElementById('cahierList').innerHTML = demoData.cahier.map(c=>`
+    <div class="card rounded-[18px] p-4"><div class="flex gap-3 mb-2"><div class="w-8 h-8 rounded-lg ${c.color} flex items-center justify-center text-white font-bold text-[12px]">${c.subject[0]}</div><div><div class="font-semibold text-[14px]">${c.subject}</div><div class="text-[12px] text-white/40">${c.teacher}</div></div></div><div class="text-[13px] text-white/70 bg-bg border border-border rounded-xl p-3">${c.content}</div></div>
+  `).join('');
+}
+
+// --- NAVIGATION ---
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('page-'+page).classList.remove('hidden');
+  document.querySelectorAll('.navBtn').forEach(b=>{
+    const isActive = b.dataset.nav===page || (page==='moyennes'&&b.dataset.nav==='notes') || (['absences','cahier','calendrier','notifications','parametres'].includes(page)&&b.dataset.nav==='plus');
+    b.querySelector('span:first-child').className = `w-6 h-6 flex items-center justify-center rounded-lg ${isActive?'bg-accent text-white':'text-white/50'}`;
+    b.querySelector('span:last-child').className = `text-[10px] font-medium ${isActive?'text-white':'text-white/50'}`;
+  });
+  document.querySelectorAll('#desktopNav button').forEach(b=>{
+    const isActive = b.dataset.nav===page;
+    b.className = `w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${isActive?'bg-accent text-white':'text-white/60 hover:bg-white/5'}`;
+  });
+  window.scrollTo(0,0);
+}
+
+function initDesktopNav(){
+  const items = [
+    {id:'accueil', label:'Accueil', icon:'🏠', desc:'Vue d’ensemble de ta journée'},
+    {id:'browser', label:'Navigateur Pronote', icon:'🌐', desc:'Toutatice + EduConnect intégré'},
+    {id:'edt', label:'Emploi du temps', icon:'📅', desc:'Ton planning jour par jour'},
+    {id:'notes', label:'Notes', icon:'📝', desc:'Tes notes et moyennes'},
+    {id:'devoirs', label:'Devoirs', icon:'📚', desc:'À faire et terminés'},
+    {id:'calendrier', label:'Calendrier', icon:'🗓️', desc:'Tous tes cours et événements'},
+    {id:'plus', label:'Plus', icon:'•••', desc:'Autres sections'},
+  ];
+  document.getElementById('desktopNav').innerHTML = items.map(i=>`
+    <button data-nav="${i.id}" onclick="navigate('${i.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${i.id==='accueil'?'bg-accent text-white':'text-white/60 hover:bg-white/5'}">
+      <span>${i.icon}</span><span>${i.label}</span>
+    </button>
+  `).join('');
+}
+
+// --- LOGIN LOGIC ---
+document.getElementById('btnOpenPronote').addEventListener('click', ()=>{
+  const url = document.getElementById('pronoteUrl').value.trim();
+  if(!url){ alert('Entre ton URL Pronote officielle (ex: https://035...index-education.net/pronote/)'); return; }
+  if(!url.includes('index-education.net') && !url.includes('toutatice')){ 
+    // allow toutatice too
+    if (!confirm('URL inhabituelle. Continuer quand même ?')) return;
+  }
+  state.pronoteUrl = url; saveState();
+  // Nouveau : on reste DANS MyNote via le navigateur intégré
+  enterApp();
+  navigate('browser');
+  setTimeout(()=>browserNavigate(url), 300);
+});
+
+document.getElementById('btnConnectQR').addEventListener('click', ()=>{
+  const qr = document.getElementById('qrInput').value.trim();
+  const url = document.getElementById('pronoteUrl').value.trim() || state.pronoteUrl;
+  if(!qr || qr.length<20){ alert('Colle le contenu complet du QR Code Pronote (ça commence par pronote:// ou c’est un JSON).'); return; }
+  if(!url){ alert('Renseigne d’abord ton URL Pronote.'); return; }
+  // Ici, en prod, on appellerait le backend /api/sync
+  // Simulation pour la démo web : on considère que c'est une vraie connexion
+  state.isDemo = false;
+  state.pronoteUrl = url;
+  state.lastSync = Date.now();
+  saveState();
+  enterApp();
+  alert('QR Code reçu ! En production, le backend pronote-api-papillon récupérerait maintenant tes vraies données. Pour cette démo web, on bascule en mode réel (les données affichées restent locales jusqu’à ce que le backend soit déployé).');
+});
+
+document.getElementById('btnDemo').addEventListener('click', ()=>{
+  state.isDemo = true; state.lastSync = Date.now(); saveState(); enterApp();
+});
+document.getElementById('btnLocal').addEventListener('click', ()=>{
+  state.isDemo = false; state.customHomeworks = []; state.pronoteUrl=''; state.lastSync=0; saveState(); 
+  demoData.timetable = []; demoData.homeworks = []; demoData.grades = []; // vide
+  enterApp();
+});
+
+function enterApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('flex');
+  document.getElementById('demoBadge').classList.toggle('hidden', !state.isDemo);
+  document.getElementById('settingsUrl').textContent = state.pronoteUrl || 'Non configurée';
+  document.getElementById('settingsSync').textContent = state.lastSync ? new Date(state.lastSync).toLocaleString('fr-FR') : 'Jamais';
+  document.getElementById('demoStatus').textContent = state.isDemo ? 'Activé • données fictives' : 'Désactivé • mode réel/local';
+  document.getElementById('syncText').textContent = formatSync();
+  // Re-render with potential empty data if local mode, else demo
+  if(!state.isDemo && demoData.timetable.length===0){
+    // local vide: inject minimal example so UI not broken
+    demoData.timetable = [{ id:1, subject:'Aucun cours', teacher:'Ajoute ton EDT', room:'Local', start:'--:--', end:'--:--', color:'bg-white/10', icon:'➕' }];
+  } else if(state.isDemo && demoData.timetable.length===1 && demoData.timetable[0].subject==='Aucun cours'){
+    location.reload(); // reset demo
+  }
+  renderToday(); renderTodos(); renderEDT(); renderNotes(); renderHomeworks(); renderAbsences(); renderCahier();
+  navigate('accueil');
+}
+
+document.getElementById('btnLogout').addEventListener('click', ()=>{
+  if(confirm('Se déconnecter et supprimer les données locales ?')){ localStorage.removeItem('mynote_state'); location.reload(); }
+});
+
+document.getElementById('toggleDemo').addEventListener('click', ()=>{
+  state.isDemo = !state.isDemo; saveState(); location.reload();
+});
+
+document.getElementById('btnAddHomework').addEventListener('click', ()=>{
+  const subject = prompt('Matière ? (ex: Mathématiques)');
+  if(!subject) return;
+  const title = prompt('Devoir ? (ex: Exercice 42)');
+  if(!title) return;
+  const due = prompt('Échéance ? (ex: Demain, Lundi)', 'Demain');
+  state.customHomeworks.push({ id: Date.now(), subject, title, due: due||'Demain', color:'bg-accent', done:false });
+  saveState(); renderTodos(); renderHomeworks();
+});
+
+window.toggleHomework = (id)=>{
+  const hw = [...demoData.homeworks, ...state.customHomeworks].find(h=>h.id===id);
+  if(hw){
+    if(state.customHomeworks.find(h=>h.id===id)){
+      state.customHomeworks = state.customHomeworks.map(h=>h.id===id?{...h, done:!h.done}:h);
+      saveState();
+    } else {
+      hw.done = !hw.done;
+    }
+    renderTodos(); renderHomeworks(document.querySelector('.filterBtn.bg-accent')?.dataset.filter||'all');
+  }
+};
+
+// --- BROWSER PRONOTE / TOUTATICE ---
+let browserHistory = [];
+let browserIndex = -1;
+
+function browserNavigate(url) {
+  if (!url) return;
+  // Auto-add https if missing
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (url.includes('toutatice') || url.includes('educonnect') || url.includes('index-education')) {
+      url = 'https://' + url;
+    } else {
+      url = 'https://' + url;
+    }
+  }
+  document.getElementById('browserUrlInput').value = url;
+  browserGo();
+}
+
+function browserGo() {
+  let url = document.getElementById('browserUrlInput').value.trim();
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  
+  const frame = document.getElementById('browserFrame');
+  const loading = document.getElementById('browserLoading');
+  const status = document.getElementById('browserStatus');
+  
+  loading.classList.add('hidden');
+  status.textContent = 'Chargement de ' + url + ' via proxy MyNote...';
+  
+  // Push to history
+  if (browserIndex === -1 || browserHistory[browserIndex] !== url) {
+    browserHistory = browserHistory.slice(0, browserIndex+1);
+    browserHistory.push(url);
+    browserIndex = browserHistory.length -1;
+  }
+  
+  // Use proxy
+  frame.src = '/browse?url=' + encodeURIComponent(url);
+  
+  // Save last URL
+  localStorage.setItem('mynote_last_browser_url', url);
+  if (url.includes('index-education.net')) {
+    state.pronoteUrl = url;
+    saveState();
+    document.getElementById('settingsUrl').textContent = url;
+  }
+}
+
+function browserBack() {
+  if (browserIndex > 0) {
+    browserIndex--;
+    document.getElementById('browserUrlInput').value = browserHistory[browserIndex];
+    document.getElementById('browserFrame').src = '/browse?url=' + encodeURIComponent(browserHistory[browserIndex]);
+  }
+}
+function browserForward() {
+  if (browserIndex < browserHistory.length-1) {
+    browserIndex++;
+    document.getElementById('browserUrlInput').value = browserHistory[browserIndex];
+    document.getElementById('browserFrame').src = '/browse?url=' + encodeURIComponent(browserHistory[browserIndex]);
+  }
+}
+function browserRefresh() {
+  const frame = document.getElementById('browserFrame');
+  frame.src = frame.src;
+}
+async function browserClear() {
+  if (!confirm('Effacer tous les cookies de session Toutatice/EduConnect ? Tu devras te reconnecter.')) return;
+  await fetch('/api/clear');
+  browserHistory = [];
+  browserIndex = -1;
+  document.getElementById('browserFrame').src = 'about:blank';
+  document.getElementById('browserLoading').classList.remove('hidden');
+  document.getElementById('browserStatus').textContent = 'Cookies effacés • Prêt';
+  document.getElementById('browserUrlInput').value = '';
+}
+
+// Listen for messages from proxied iframe
+window.addEventListener('message', (e)=>{
+  if (e.data && e.data.type === 'mynote:navigate') {
+    // Update URL bar with real URL
+    try {
+      const realUrl = e.data.realUrl || '';
+      if (realUrl) {
+        document.getElementById('browserUrlInput').value = realUrl;
+        document.getElementById('browserStatus').textContent = 'Connecté : ' + new URL(realUrl).hostname;
+        // If we detect Pronote session, we could auto-extract data later
+        if (realUrl.includes('pronote') && realUrl.includes('eleve.html')) {
+          document.getElementById('browserStatus').textContent = '✅ Session Pronote détectée ! Tu es connecté.';
+        }
+      }
+    } catch {}
+  }
+});
+
+// Restore last browser URL
+const lastBrowserUrl = localStorage.getItem('mynote_last_browser_url');
+if (lastBrowserUrl) {
+  document.getElementById('browserUrlInput').value = lastBrowserUrl;
+}
+
+document.querySelectorAll('.navBtn').forEach(b=>b.addEventListener('click', ()=>navigate(b.dataset.nav)));
+document.querySelectorAll('.edtTab').forEach(b=>b.addEventListener('click', (e)=>{
+  document.querySelectorAll('.edtTab').forEach(x=>{ x.className='edtTab px-3 py-1.5 rounded-lg text-white/60 text-[13px]'; });
+  e.target.className='edtTab px-3 py-1.5 rounded-lg bg-accent text-white text-[13px] font-medium';
+  document.getElementById('edtDate').textContent = e.target.dataset.edt==='today'?'Lundi 14 avril 2025':e.target.dataset.edt==='tomorrow'?'Mardi 15 avril 2025':'Semaine du 14 au 19 avril 2025';
+}));
+document.querySelectorAll('.filterBtn').forEach(b=>b.addEventListener('click', (e)=>{
+  document.querySelectorAll('.filterBtn').forEach(x=>{ x.className='filterBtn px-3.5 py-2 rounded-full bg-card border border-border text-[13px] whitespace-nowrap'; });
+  e.target.className='filterBtn px-3.5 py-2 rounded-full bg-accent text-white text-[13px] whitespace-nowrap';
+  renderHomeworks(e.target.dataset.filter);
+}));
+
+// Auto-enter if already logged
+if(localStorage.getItem('mynote_state')){
+  const s = JSON.parse(localStorage.getItem('mynote_state'));
+  if(s.pronoteUrl || s.isDemo){
+    // restore demo data if was wiped
+    if(s.isDemo && demoData.timetable.length===0) location.reload();
+    else enterApp();
+  }
+}
+
+initDesktopNav();
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+setInterval(()=>{ document.getElementById('syncText').textContent = formatSync(); }, 60000);
+</script>
+</body>
+</html>
