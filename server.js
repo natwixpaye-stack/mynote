@@ -1,7 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import * as cheerio from 'cheerio';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as pawnote from 'pawnote';
@@ -15,199 +14,334 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(__dirname));
 
-let lastError = null, lastSuccess = null;
-const jars = new Map();
-function getSid(req,res){let sid=req.cookies.mynote_sid;if(!sid){sid=Math.random().toString(36).slice(2)+Date.now().toString(36);res.cookie('mynote_sid',sid,{httpOnly:false,sameSite:'lax',maxAge:86400000*7});}if(!jars.has(sid))jars.set(sid,{});return sid;}
+let lastError=null, lastSuccess=null;
 
-app.get('/api/health',(req,res)=>res.json({ok:true,pawnote:true,flow:'ent-fix',lastError:lastError?.time}));
-app.get('/api/debug/last',(req,res)=>res.json({lastError,lastSuccess}));
+app.get('/api/health',(req,res)=>res.json({ok:true,pawnote:true,flow:'papillon-ent-webview'}));
 
 app.get('/api/test-pronote', async (req,res)=>{
-  const {url}=req.query; if(!url) return res.status(400).json({error:'url manquant'});
+  const {url}=req.query;
   try{
     const clean=pawnote.cleanURL(url);
     const instance=await pawnote.instance(clean);
-    // Try to fetch mobile page to see if ENT blocks
     let mobileOk=false, mobileError=null;
     try{
       const r=await fetch(clean+"/mobile.eleve.html?fd=1",{headers:{"User-Agent":"Mozilla/5.0 (iPhone)"}});
       const txt=await r.text();
-      mobileOk = txt.includes('PRONOTE') || txt.includes('pronote') || txt.includes('Start');
-      if(!mobileOk) mobileError=txt.substring(0,300);
+      mobileOk = txt.includes('PRONOTE') || txt.includes('Start');
+      if(!mobileOk) mobileError=txt.substring(0,400);
     }catch(e){ mobileError=e.message; }
-    res.json({success:true,cleanUrl:clean,instance:{name:instance.name,version:instance.version,hasCAS:!!instance.casURL,casURL:instance.casURL},mobileOk,mobileError, entBlocked: !mobileOk});
-  }catch(e){
-    lastError={time:new Date().toISOString(),endpoint:'test-pronote',url,error:e.message,name:e.name};
-    res.status(500).json({error:e.message,name:e.name});
-  }
+    res.json({success:true,cleanUrl:clean,instance:{name:instance.name,hasCAS:!!instance.casURL,casURL:instance.casURL},mobileOk,mobileError,entBlocked:!mobileOk});
+  }catch(e){ res.status(500).json({error:e.message,name:e.name}); }
 });
 
-// BOOKMARKLET - receive data extracted from Pronote page in browser
-app.post('/api/bookmarklet', async (req,res)=>{
-  const {html, url, user, timetable, grades} = req.body;
-  console.log('[bookmarklet] received', url, 'html len', html?.length);
-  lastSuccess={time:new Date().toISOString(),method:'bookmarklet',url};
-  // Try to parse basic info from html if provided
-  try{
-    // Store as real data
-    res.json({success:true,message:'Données reçues via bookmarklet',received:{hasHtml:!!html,url,user}});
-  }catch(e){
-    res.status(500).json({error:e.message});
-  }
-});
+// Papillon-style ENT login - WebView proxy
+app.get('/ent/login', async (req,res)=>{
+  const {url, deviceUUID} = req.query;
+  if(!url) return res.status(400).send('url manquant');
+  const uuid = deviceUUID || 'mynote-'+Math.random().toString(36).slice(2);
+  const clean = pawnote.cleanURL(url);
+  const infoUrl = clean + "/InfoMobileApp.json?id=0D264427-EEFC-4810-A9E9-346942A862A4";
+  
+  // HTML page that will handle ENT flow like Papillon
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyNote - Connexion ENT</title>
+<style>
+body{font-family:Inter,sans-serif;background:#0B1224;color:white;margin:0;padding:20px}
+.card{background:#151E35;border:1px solid #233154;border-radius:16px;padding:20px;max-width:600px;margin:0 auto}
+.btn{background:#6C7CFF;color:white;border:0;padding:12px 20px;border-radius:10px;font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+#log{font-size:11px;background:#00000080;padding:10px;border-radius:8px;margin-top:10px;max-height:200px;overflow:auto;white-space:pre-wrap}
+iframe{width:100%;height:600px;border:1px solid #233154;border-radius:12px;background:white;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>🔐 Connexion ENT Toutatice - ${clean}</h2>
+<p style="font-size:13px;color:#ffffff99">Papillon-style WebView: On va charger Pronote, tu te connectes via EduConnect, et MyNote récupère ton token automatiquement.</p>
+<div id="status" style="font-size:13px;margin:10px 0;padding:10px;background:#6C7CFF20;border-radius:8px">Chargement InfoMobileApp.json...</div>
+<div id="log"></div>
+<iframe id="pronoteFrame" style="display:none"></iframe>
+<button id="btnManual" class="btn" style="display:none">J'ai fini de me connecter, extraire mes données</button>
+</div>
 
-// Direct login
-app.post('/api/login-direct', async (req,res)=>{
-  const {pronoteUrl,username,password}=req.body;
-  if(!pronoteUrl||!username||!password) return res.status(400).json({error:'missing'});
+<script>
+const CLEAN_URL = "${clean}";
+const DEVICE_UUID = "${uuid}";
+const INFO_URL = "${infoUrl}";
+let logEl = document.getElementById('log');
+let statusEl = document.getElementById('status');
+let frame = document.getElementById('pronoteFrame');
+let btnManual = document.getElementById('btnManual');
+
+function log(msg){
+  console.log(msg);
+  logEl.textContent += "\\n" + new Date().toLocaleTimeString() + " " + msg;
+}
+
+async function start(){
   try{
-    const clean=pawnote.cleanURL(pronoteUrl);
-    const session=pawnote.createSessionHandle();
-    const deviceUUID='mynote-'+Math.random().toString(36).slice(2);
-    await pawnote.loginCredentials(session,{url:clean,kind:pawnote.AccountKind.STUDENT,username,password,deviceUUID,navigatorIdentifier:'MyNote/1.0'});
-    const [timetable,grades,homeworks]=await Promise.all([
-      pawnote.timetableFromIntervals(session,new Date(),new Date(Date.now()+7*86400000)).catch(e=>({error:e.message,classes:[]})),
-      pawnote.gradesOverview(session).catch(e=>({error:e.message})),
-      pawnote.assignmentsFromIntervals(session,new Date(),new Date(Date.now()+14*86400000)).catch(e=>[])
-    ]);
-    lastSuccess={time:new Date().toISOString(),method:'direct',user:session.user?.name};
-    res.json({success:true,user:{name:session.user?.name,class:session.user?.studentClass?.name},instance:{url:clean},timetable,grades,homeworks});
+    log("Fetch InfoMobileApp.json: " + INFO_URL);
+    // Use our proxy to avoid CORS
+    const proxyUrl = "/api/proxy-json?url=" + encodeURIComponent(INFO_URL);
+    const res = await fetch(proxyUrl);
+    const json = await res.json();
+    log("InfoMobileApp reçu: " + JSON.stringify(json).substring(0,200));
+    
+    const hasCAS = json.CAS && json.CAS.jetonCAS;
+    statusEl.textContent = hasCAS ? "CAS détecté, configuration cookies..." : "Pas de CAS, mode direct";
+    
+    if(hasCAS){
+      log("CAS jeton trouvé: " + json.CAS.jetonCAS.substring(0,30)+"...");
+      // Set cookies like Papillon
+      document.cookie = "appliMobile=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      document.cookie = "validationAppliMobile=" + json.CAS.jetonCAS + "; expires=" + new Date(Date.now()+5*60*1000).toUTCString();
+      document.cookie = "uuidAppliMobile=" + DEVICE_UUID + "; expires=" + new Date(Date.now()+5*60*1000).toUTCString();
+      document.cookie = "ielang=1036; expires=" + new Date(Date.now()+365*86400000).toUTCString();
+    } else {
+      document.cookie = "appliMobile=1; expires=" + new Date(Date.now()+5*60*1000).toUTCString();
+      document.cookie = "ielang=1036; expires=" + new Date(Date.now()+365*86400000).toUTCString();
+    }
+    
+    // Now load mobile.eleve.html in iframe via proxy that injects hooks
+    const mobileUrl = CLEAN_URL + "/mobile.eleve.html?fd=1&deviceUUID=" + DEVICE_UUID;
+    const proxiedMobile = "/ent/proxy?url=" + encodeURIComponent(mobileUrl) + "&deviceUUID=" + DEVICE_UUID;
+    
+    log("Chargement Pronote via proxy: " + mobileUrl);
+    statusEl.textContent = "Chargement Pronote - connecte-toi via EduConnect dans l'iframe ci-dessous";
+    frame.style.display = "block";
+    frame.src = proxiedMobile;
+    btnManual.style.display = "block";
+    
+    // Listen for messages from iframe
+    window.addEventListener('message', async (e)=>{
+      log("Message reçu de l'iframe: " + JSON.stringify(e.data).substring(0,300));
+      if(e.data && e.data.type === 'pronote.loginState' && e.data.data && e.data.data.status === 0){
+        log("✅ LoginState reçu! login=" + e.data.data.login);
+        statusEl.textContent = "✅ Connecté! Récupération des données...";
+        
+        // Send to parent MyNote window
+        if(window.opener){
+          window.opener.postMessage({type:'mynote:ent-success', data:e.data.data, url:CLEAN_URL, deviceUUID:DEVICE_UUID}, '*');
+        }
+        // Also try to login via pawnote directly
+        try{
+          const res = await fetch('/api/ent-callback', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({url:CLEAN_URL, login:e.data.data.login, token:e.data.data.mdp, deviceUUID:DEVICE_UUID})
+          });
+          const j = await res.json();
+          log("Callback result: " + JSON.stringify(j).substring(0,300));
+          if(j.success){
+            if(window.opener){
+              window.opener.postMessage({type:'mynote:real-data', data:j}, '*');
+            }
+            statusEl.textContent = "✅ Données récupérées! Tu peux fermer cet onglet et retourner sur MyNote.";
+            // Store in localStorage for same-origin
+            localStorage.setItem('mynote_real_data', JSON.stringify(j));
+            localStorage.setItem('mynote_ent_data', JSON.stringify({login:e.data.data.login, token:e.data.data.mdp, url:CLEAN_URL, deviceUUID:DEVICE_UUID}));
+          }
+        }catch(err){
+          log("Erreur callback: " + err.message);
+        }
+      }
+    });
+    
   }catch(err){
-    lastError={time:new Date().toISOString(),endpoint:'login-direct',error:err.message,name:err.name,stack:err.stack?.substring(0,1000)};
-    let friendly=err.message;
-    if(err.name==='PageUnavailableError') friendly=`ENT Bloque Render: Ton lycée ${pronoteUrl} utilise Toutatice qui bloque les serveurs externes. Le test mobile.eleve.html renvoie "ENT - Erreur technique". Solution: Utilise le BOOKMARKLET (voir onglet).`;
-    if(err.name==='BadCredentialsError') friendly='Identifiants incorrects';
-    res.status(500).json({error:friendly,originalError:err.message,name:err.name});
+    log("Erreur: " + err.message);
+    statusEl.textContent = "Erreur: " + err.message;
+  }
+}
+
+btnManual.onclick = ()=>{
+  try{
+    const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+    const bodyText = iframeDoc.body.innerText;
+    log("Manuel - body length: " + bodyText.length);
+    // Try to find loginState in iframe
+    const win = frame.contentWindow;
+    if(win.loginState){
+      log("loginState trouvé manuellement: " + JSON.stringify(win.loginState).substring(0,300));
+      window.postMessage({type:'pronote.loginState', data:win.loginState}, '*');
+      // Dispatch to our own listener
+      window.dispatchEvent(new MessageEvent('message', {data:{type:'pronote.loginState', data:win.loginState}}));
+    } else {
+      log("Pas de loginState, body: " + bodyText.substring(0,500));
+      alert("Pas encore connecté. Assure-toi d'être bien connecté dans l'iframe (tu dois voir Pronote). Puis réessaie.");
+    }
+  }catch(e){
+    log("Erreur accès iframe (CORS): " + e.message + " - Utilise le bouton dans l'iframe Pronote si disponible");
+  }
+};
+
+start();
+</script>
+</body>
+</html>
+  `);
+});
+
+app.get('/api/proxy-json', async (req,res)=>{
+  const {url}=req.query;
+  if(!url) return res.status(400).json({error:'url manquant'});
+  try{
+    const r=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 (iPhone) Pronote"}});
+    const txt=await r.text();
+    res.set('Access-Control-Allow-Origin','*');
+    res.set('Content-Type','application/json');
+    res.send(txt);
+  }catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.get('/ent/proxy', async (req,res)=>{
+  const {url, deviceUUID} = req.query;
+  if(!url) return res.status(400).send('url manquant');
+  const uuid = deviceUUID || 'mynote-'+Math.random().toString(36).slice(2);
+  try{
+    const r=await fetch(url,{
+      headers:{
+        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+        "Cookie": "appliMobile=1; ielang=1036; uuidAppliMobile="+uuid
+      },
+      redirect:'manual'
+    });
+    
+    // Handle redirect to CAS
+    if(r.status>=300 && r.status<400){
+      const loc=r.headers.get('location');
+      if(loc){
+        const next = new URL(loc, url).toString();
+        console.log('[ent/proxy] redirect to', next);
+        // If redirect to toutatice, proxy it too but inject our hooks
+        if(next.includes('toutatice') || next.includes('educonnect') || next.includes('cas')){
+          // For CAS, we need to let user login, so we proxy the CAS page with injection to capture after login
+          return res.redirect('/ent/proxy?url='+encodeURIComponent(next)+'&deviceUUID='+uuid);
+        }
+        return res.redirect('/ent/proxy?url='+encodeURIComponent(next)+'&deviceUUID='+uuid);
+      }
+    }
+    
+    let html=await r.text();
+    
+    // Inject Papillon hooks
+    const inject = `
+<script>
+// Papillon hooks for web
+window.hookAccesDepuisAppli = function() {
+  try{ this.passerEnModeValidationAppliMobile('', '${uuid}'); }catch(e){}
+};
+try{
+  window.GInterface && window.GInterface.passerEnModeValidationAppliMobile && window.GInterface.passerEnModeValidationAppliMobile('', '${uuid}', '', '', '{"model":"random","platform":"android"}');
+}catch(e){}
+
+setInterval(function(){
+  try{
+    const state = window.loginState;
+    if(state){
+      window.parent.postMessage({type:'pronote.loginState', data:state}, '*');
+      // Also try to post to opener
+      if(window.opener) window.opener.postMessage({type:'pronote.loginState', data:state}, '*');
+    }
+  }catch(e){}
+}, 1000);
+
+// Watch for connection errors
+setInterval(function(){
+  if(document.body && document.body.innerText.includes('connexion impossible')){
+    window.parent.postMessage({type:'pronote.connectionError'}, '*');
+  }
+}, 1000);
+
+// Add MyNote banner
+window.addEventListener('load', function(){
+  let banner=document.createElement('div');
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999999;background:#6C7CFF;color:white;padding:12px;text-align:center;font-family:Inter,sans-serif;font-weight:600;font-size:13px';
+  banner.innerHTML='🔗 MyNote - Connecte-toi via EduConnect ci-dessous. Une fois dans Pronote, MyNote récupérera automatiquement tes données. <button onclick="if(window.loginState) window.parent.postMessage({type:\\'pronote.loginState\\', data:window.loginState}, \\'*\\')" style="margin-left:10px;background:white;color:#6C7CFF;border:0;padding:4px 10px;border-radius:6px;font-weight:bold;cursor:pointer">Extraire maintenant</button>';
+  document.body.prepend(banner);
+});
+</script>
+    `;
+    
+    // Inject before </head> or </body>
+    if(html.includes('</head>')){
+      html = html.replace('</head>', inject + '</head>');
+    } else {
+      html = inject + html;
+    }
+    
+    res.set('Content-Type','text/html');
+    res.send(html);
+  }catch(e){
+    res.status(500).send('Proxy error: '+e.message);
   }
 });
 
-// QR login - improved parser for Anita Conti format
+app.post('/api/ent-callback', async (req,res)=>{
+  const {url, login, token, deviceUUID} = req.body;
+  if(!url||!login||!token) return res.status(400).json({error:'missing'});
+  try{
+    const clean=pawnote.cleanURL(url);
+    const session=pawnote.createSessionHandle();
+    const refresh = await pawnote.loginToken(session, {
+      url: clean,
+      kind: pawnote.AccountKind.STUDENT,
+      username: login,
+      token,
+      deviceUUID: deviceUUID || 'mynote-'+Math.random().toString(36).slice(2)
+    });
+    
+    const [timetable, grades, homeworks] = await Promise.all([
+      pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*86400000)).catch(e=>({error:e.message,classes:[]})),
+      pawnote.gradesOverview(session).catch(e=>({error:e.message})),
+      pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*86400000)).catch(e=>[])
+    ]);
+    
+    res.json({
+      success:true,
+      user:{name:session.user?.name, class:session.user?.studentClass?.name},
+      instance:{url:clean},
+      timetable, grades, homeworks,
+      token: refresh.token,
+      method:'ent-webview'
+    });
+  }catch(err){
+    console.error('[ent-callback] error', err);
+    res.status(500).json({error:err.message, name:err.name});
+  }
+});
+
+// Keep old endpoints for fallback
 app.post('/api/login-qr', async (req,res)=>{
   const {qrData,pin}=req.body;
   if(!qrData) return res.status(400).json({error:'qrData manquant'});
-  console.log('[login-qr] len',qrData.length,'pin',pin,'preview',qrData.substring(0,100));
   try{
-    let qrObj=null;
-    let raw=qrData.trim();
-    
-    // Format 1: pronote://?url=...&login=...&jeton=...
-    if(raw.startsWith('pronote://')){
-      try{const u=new URL(raw);qrObj={url:u.searchParams.get('url'),login:u.searchParams.get('login'),jeton:u.searchParams.get('jeton')||u.searchParams.get('token')};}catch{}
-    }
-    // Format 2: JSON {"jeton":"...","login":"...","url":"..."} or {"url":...}
+    let qrObj=null; let raw=qrData.trim();
+    if(raw.startsWith('pronote://')){ try{ const u=new URL(raw); qrObj={url:u.searchParams.get('url'), login:u.searchParams.get('login'), jeton:u.searchParams.get('jeton')}; }catch{} }
     if(!qrObj?.url){
-      try{
-        // Clean raw: it might have newlines/spaces in hex
-        let cleaned = raw.replace(/\s+/g,'');
-        // Try to extract JSON object
-        const jsonMatch = cleaned.match(/\{.*\}/);
-        if(jsonMatch){
-          const parsed=JSON.parse(jsonMatch[0]);
-          if(parsed.url) qrObj=parsed;
-        }
-        // If still not, try to parse raw as JSON directly (after removing spaces)
-        if(!qrObj?.url){
-          const parsed=JSON.parse(raw);
-          if(parsed.url) qrObj=parsed;
-        }
-      }catch{}
+      try{ const p=JSON.parse(raw); if(p.url) qrObj=p; }catch{}
     }
-    // Format 3: Anita Conti format - long hex at start + ","login":"...","url":"..."
-    // Example: CF6F4D88...4142C155","login":"582F...","url":"https://..."
     if(!qrObj?.url){
-      // Extract url
-      const urlMatch = raw.match(/https?:\/\/[^\s"']+\.index-education\.net\/pronote\/[^\s"']*/i) || raw.match(/https?:\/\/[^\s"']+\.index-education\.net\/pronote\/?/i);
-      const loginMatch = raw.match(/"login"\s*:\s*"([A-F0-9]+)"/i);
-      // jeton is long hex (100+ chars) - could be at start or in "jeton":"..."
-      let jetonMatch = raw.match(/"jeton"\s*:\s*"([A-F0-9]+)"/i);
-      let jeton = jetonMatch ? jetonMatch[1] : null;
-      if(!jeton){
-        // Look for long hex string at beginning or anywhere >100 chars
-        const longHex = raw.match(/([A-F0-9]{100,})/i);
-        if(longHex) jeton = longHex[1].replace(/\s+/g,'');
-      }
-      if(urlMatch){
-        qrObj={
-          url: urlMatch[0],
-          login: loginMatch?loginMatch[1]:null,
-          jeton: jeton
-        };
-      }
+      const urlMatch=raw.match(/https?:\\/\\/[^\\s"']+\\.index-education\\.net\\/pronote\\/?/i);
+      const loginMatch=raw.match(/"login"\\s*:\\s*"([A-F0-9]+)"/i);
+      const jetonMatch=raw.match(/"jeton"\\s*:\\s*"([A-F0-9]+)"/i) || raw.match(/([A-F0-9]{100,})/i);
+      if(urlMatch) qrObj={url:urlMatch[0], login:loginMatch?.[1], jeton:jetonMatch?.[1]||jetonMatch?.[0]};
     }
-    
-    // Clean URL - remove mobile.eleve.html if present
-    if(qrObj?.url){
-      qrObj.url = qrObj.url.replace(/\/mobile\.eleve\.html.*$/i,'').replace(/\/mobile\.parent\.html.*$/i,'');
-      if(!qrObj.url.endsWith('/pronote')) {
-        // Ensure it ends with /pronote
-        try{
-          const u=new URL(qrObj.url);
-          let p=u.pathname;
-          if(p.includes('mobile')) p='/pronote/';
-          qrObj.url = `${u.protocol}//${u.host}${p}`.replace(/\/$/,'');
-          if(!qrObj.url.includes('/pronote')) qrObj.url+='/pronote';
-        }catch{}
-      }
-      // Normalize to /pronote
-      if(qrObj.url.includes('/pronote/')) qrObj.url = qrObj.url.split('/pronote/')[0]+'/pronote';
-    }
-
-    if(!qrObj?.url||!qrObj?.login||!qrObj?.jeton){
-      return res.status(400).json({error:`QR incomplet - url:${!!qrObj?.url} login:${!!qrObj?.login} jeton:${!!qrObj?.jeton}`,receivedPreview:raw.substring(0,500),help:'Copie TOUT le contenu du QR Code depuis Pronote'});
-    }
-
-    console.log('[login-qr] parsed', {url:qrObj.url,loginLen:qrObj.login.length,jetonLen:qrObj.jeton.length,pin});
-
-    // Check if instance is ENT blocked before trying pawnote
-    const clean=pawnote.cleanURL(qrObj.url);
-    const instance=await pawnote.instance(clean).catch(e=>null);
-    if(instance?.casURL){
-      // Try mobile page
-      try{
-        const r=await fetch(clean+"/mobile.eleve.html?fd=1",{headers:{"User-Agent":"Mozilla/5.0 (iPhone)"}});
-        const txt=await r.text();
-        if(txt.includes('ENT - Erreur technique') || txt.includes('Erreur technique') || !txt.includes('PRONOTE')){
-          console.log('[login-qr] ENT detected blocking Render');
-          return res.status(500).json({
-            error:`🚫 Ton lycée ${instance.name} utilise ENT Toutatice qui bloque Render (serveur US). Même le QR Code ne marche pas depuis Render car mobile.eleve.html renvoie "ENT - Erreur technique".`,
-            name:'ENTBlockedError',
-            instance: {name:instance.name, hasCAS:true, casURL:instance.casURL},
-            solution: 'Utilise le BOOKMARKLET: 1) Va dans Pronote via Toutatice 2) Clique sur le bookmarklet MyNote 3) Tes données seront extraites directement depuis ton navigateur (pas depuis Render). Voir onglet "🔖 Bookmarklet" dans MyNote.',
-            bookmarklet: `javascript:(function(){let h=document.documentElement.outerHTML;let u=location.href;fetch('https://mynote-k8am.onrender.com/api/bookmarklet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({html:h,url:u})}).then(r=>r.json()).then(j=>{alert('MyNote: Données envoyées! Retourne sur MyNote');localStorage.setItem('mynote_bookmarklet',JSON.stringify({html:h,url:u,time:Date.now()}));}).catch(e=>alert('Erreur:'+e.message));})();`
-          });
-        }
-      }catch(e){ console.log('mobile check error',e.message); }
-    }
-
+    if(!qrObj?.url||!qrObj?.login||!qrObj?.jeton) return res.status(400).json({error:'QR incomplet'});
     const session=pawnote.createSessionHandle();
-    const deviceUUID='mynote-'+Math.random().toString(36).slice(2)+Date.now().toString(36).slice(2);
-    await pawnote.loginQrCode(session,{qr:{url:qrObj.url,login:qrObj.login,jeton:qrObj.jeton},pin:pin||'',deviceUUID,navigatorIdentifier:'MyNote/1.0'});
-
+    const deviceUUID='mynote-'+Math.random().toString(36).slice(2);
+    await pawnote.loginQrCode(session,{qr:{url:qrObj.url, login:qrObj.login, jeton:qrObj.jeton}, pin:pin||'', deviceUUID, navigatorIdentifier:'MyNote/1.0'});
     const [timetable,grades,homeworks]=await Promise.all([
       pawnote.timetableFromIntervals(session,new Date(),new Date(Date.now()+7*86400000)).catch(e=>({error:e.message,classes:[]})),
       pawnote.gradesOverview(session).catch(e=>({error:e.message})),
       pawnote.assignmentsFromIntervals(session,new Date(),new Date(Date.now()+14*86400000)).catch(e=>[])
     ]);
-    lastSuccess={time:new Date().toISOString(),method:'qr',user:session.user?.name};
-    res.json({success:true,user:{name:session.user?.name,class:session.user?.studentClass?.name},instance:{url:clean},timetable,grades,homeworks});
-  }catch(err){
-    console.error('[login-qr] error',err);
-    lastError={time:new Date().toISOString(),endpoint:'login-qr',pin,error:err.message,name:err.name,stack:err.stack?.substring(0,1500)};
-    let friendly=err.message;
-    if(err.name==='PageUnavailableError') friendly=`🚫 ENT Toutatice bloque Render: ${err.message}. Ton lycée utilise un ENT qui refuse les connexions depuis les serveurs US. Solution: Utilise le BOOKMARKLET (onglet 🔖) - ça extrait tes données directement depuis ton navigateur quand tu es dans Pronote.`;
-    if(err.name==='BadCredentialsError') friendly='PIN ou QR incorrect - Le QR expire après 10 min! Génère un NOUVEAU QR et note bien le PIN à 4 chiffres (pas 0000).';
-    res.status(500).json({error:friendly,originalError:err.message,name:err.name});
-  }
-});
-
-app.get('/browse', async (req,res)=>{
-  const targetUrl=req.query.url; if(!targetUrl) return res.status(400).send('url manquant');
-  try{
-    const r=await fetch(targetUrl,{headers:{'User-Agent':'Mozilla/5.0'}});
-    const html=await r.text();
-    res.send(html);
-  }catch(e){res.status(500).send(e.message);}
+    res.json({success:true,user:{name:session.user?.name,class:session.user?.studentClass?.name},instance:{url:pawnote.cleanURL(qrObj.url)},timetable,grades,homeworks});
+  }catch(err){ res.status(500).json({error:err.message,name:err.name}); }
 });
 
 const PORT=process.env.PORT||10000;
-app.listen(PORT,'0.0.0.0',()=>console.log('MyNote ENT fix listening',PORT));
+app.listen(PORT,'0.0.0.0',()=>console.log('MyNote Papillon ENT listening',PORT));
