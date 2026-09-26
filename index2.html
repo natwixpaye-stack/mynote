@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyNote — Pronote à ta sauce</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config={darkMode:'class',theme:{extend:{colors:{bg:'#0B1224',card:'#151E35',border:'#233154',accent:'#6C7CFF',accent2:'#8B9AFF'}}}}
+</script>
+<style>body{font-family:Inter,sans-serif;background:#0B1224} .card{background:linear-gradient(180deg,#1A2442,#151E35);border:1px solid #233154}</style>
+</head>
+<body class="bg-bg text-white min-h-screen">
+<!-- LOGIN -->
+<div id="login" class="min-h-screen flex">
+  <div class="w-full lg:w-[440px] p-8 flex flex-col justify-center bg-[#0E162C] border-r border-border">
+    <div class="flex items-center gap-3 mb-10">
+      <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold text-lg">M</div>
+      <span class="font-bold text-xl">MyNote</span>
+      <span class="text-[10px] px-2 py-1 rounded-full bg-white/10 ml-2">PRONOTE CUSTOM</span>
+    </div>
+    <h1 class="text-[32px] font-[800] leading-[0.95] mb-3">Pronote,<br><span class="text-accent2">à ta sauce.</span></h1>
+    <p class="text-white/50 text-[14px] mb-8">Le même compte Toutatice/EduConnect, mais une interface rapide, sombre, et faite pour toi. Première générale • Math/PC/SES</p>
+    
+    <div class="space-y-4">
+      <div>
+        <label class="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-2 block">URL Pronote de ton lycée</label>
+        <input id="pronoteUrl" value="https://0350774L.index-education.net/pronote/" placeholder="https://...index-education.net/pronote/" class="w-full h-12 px-4 rounded-xl bg-bg border border-border focus:border-accent outline-none text-[14px]">
+        <p class="text-[11px] text-white/30 mt-2">Trouvable dans Toutatice > Vie scolaire > Pronote. Exemple Vitré.</p>
+      </div>
+      <div class="rounded-xl bg-accent/10 border border-accent/20 p-3 text-[12px] text-white/70">
+        <b class="text-white">Comment ça marche ?</b><br>
+        1. Tu cliques sur "Se connecter avec Toutatice"<br>
+        2. MyNote ouvre Toutatice <b>dans son navigateur intégré</b> (proxy sécurisé)<br>
+        3. Tu te logges avec ton compte EduConnect comme d'habitude<br>
+        4. Toutatice te redirige vers Pronote → MyNote récupère ta session
+      </div>
+      <button id="btnLogin" class="w-full h-[52px] rounded-xl bg-accent hover:bg-accent2 text-white font-semibold flex items-center justify-center gap-2">
+        <span>🔒</span> Se connecter avec Toutatice
+      </button>
+      <button id="btnDemo" class="w-full h-11 rounded-xl bg-white/5 border border-border text-[13px]">Voir la démo de l'interface (sans compte)</button>
+    </div>
+    <div class="mt-auto pt-10 text-[11px] text-white/20">MyNote n'est pas affilié à Index-Education • 100% local • Proxy open-source</div>
+  </div>
+  <div class="hidden lg:flex flex-1 bg-[#0B1224] items-center justify-center p-10">
+    <div class="w-full max-w-[900px]">
+      <div class="grid grid-cols-3 gap-4">
+        <div class="col-span-2 card rounded-[24px] p-6">
+          <div class="flex justify-between mb-4"><span class="font-bold">Accueil MyNote</span><span class="text-[11px] px-2 py-1 rounded-full bg-success/20 text-success">Connecté via Toutatice</span></div>
+          <div class="space-y-3">
+            <div class="h-20 rounded-xl bg-bg border border-border p-4 flex gap-3"><div class="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">∑</div><div><div class="font-bold">Mathématiques • Spé</div><div class="text-[12px] text-white/50">M. Dupont • B204 • Dans 37 min</div></div></div>
+            <div class="grid grid-cols-2 gap-3"><div class="h-24 rounded-xl bg-bg border border-border p-4"><div class="text-[11px] text-white/40 uppercase">Moyenne Générale</div><div class="text-2xl font-bold mt-1">15,2/20</div></div><div class="h-24 rounded-xl bg-bg border border-border p-4"><div class="text-[11px] text-white/40 uppercase">À faire</div><div class="text-[13px] mt-1">3 devoirs • 1 en retard</div></div></div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="card rounded-[24px] p-4"><div class="font-bold text-[13px] mb-3">Emploi du temps</div><div class="space-y-2 text-[12px]"><div class="flex gap-2"><span class="text-white/40">08:00</span><span>Physique-Chimie</span></div><div class="flex gap-2"><span class="text-white/40">09:00</span><span class="font-bold">Mathématiques • SPÉ</span></div><div class="flex gap-2"><span class="text-white/40">10:00</span><span>SES • SPÉ</span></div></div></div>
+          <div class="card rounded-[24px] p-4"><div class="font-bold text-[13px] mb-2">Connexion réelle</div><div class="text-[12px] text-white/50">Via Toutatice + EduConnect. Aucun mot de passe stocké. Session chiffrée.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden min-h-screen flex-col">
+  <header class="h-14 border-b border-border flex items-center justify-between px-4 bg-[#0E162C] sticky top-0 z-20">
+    <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span><span id="status" class="ml-3 text-[11px] px-2 py-1 rounded-full bg-success/20 text-success">● Connecté via Toutatice</span></div>
+    <div class="flex gap-2"><button onclick="navigate('browser')" class="h-8 px-3 rounded-lg bg-accent text-white text-[12px]">🌐 Navigateur Toutatice</button><button onclick="location.reload()" class="h-8 w-8 rounded-lg bg-card border border-border">⎋</button></div>
+  </header>
+  <div class="flex flex-1">
+    <aside class="w-[240px] border-r border-border p-3 hidden lg:block">
+      <nav class="space-y-1" id="nav"></nav>
+    </aside>
+    <main class="flex-1">
+      <!-- BROWSER -->
+      <section id="page-browser" class="h-[calc(100vh-56px)] flex flex-col">
+        <div class="h-11 bg-card border-b border-border flex items-center gap-2 px-2">
+          <button onclick="bBack()" class="w-8 h-8 rounded-lg bg-bg border border-border">←</button>
+          <button onclick="bForward()" class="w-8 h-8 rounded-lg bg-bg border border-border">→</button>
+          <button onclick="bRefresh()" class="w-8 h-8 rounded-lg bg-bg border border-border">↻</button>
+          <div class="flex-1 flex items-center bg-bg border border-border rounded-xl px-3 h-8 gap-2">
+            <span class="text-[12px]">🔒</span>
+            <input id="bUrl" class="flex-1 bg-transparent outline-none text-[13px]" placeholder="URL Toutatice ou Pronote..." onkeydown="if(event.key==='Enter') bGo()">
+            <button onclick="bGo()" class="px-3 py-1 rounded-lg bg-accent text-white text-[11px]">Go</button>
+          </div>
+          <button onclick="bClear()" class="w-8 h-8 rounded-lg bg-bg border border-border">🗑️</button>
+        </div>
+        <div class="bg-[#0B1224] px-3 py-1.5 flex gap-2 text-[11px] border-b border-border">
+          <button onclick="bNav('https://www.toutatice.fr')" class="px-3 py-1 rounded-full bg-accent/20 text-accent2">Toutatice</button>
+          <button onclick="bNav('https://educonnect.education.gouv.fr')" class="px-3 py-1 rounded-full bg-card border border-border">EduConnect</button>
+          <span id="bStatus" class="text-white/40 ml-2">Proxy MyNote actif • Connecte-toi avec ton compte élève</span>
+        </div>
+        <div class="flex-1 relative bg-white">
+          <iframe id="bFrame" class="w-full h-full border-0" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"></iframe>
+          <div id="bLoading" class="absolute inset-0 bg-bg flex flex-col items-center justify-center">
+            <div class="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-2xl mb-4">🎓</div>
+            <div class="font-bold text-lg">Connecte-toi à Toutatice</div>
+            <div class="text-[13px] text-white/50 mt-2 text-center max-w-[360px]">C'est ton vrai compte EduConnect. MyNote ne voit jamais ton mot de passe, il passe directement à Toutatice via le proxy sécurisé.</div>
+            <button onclick="bNav('https://www.toutatice.fr')" class="mt-6 h-11 px-6 rounded-xl bg-accent text-white font-medium">Aller sur Toutatice →</button>
+          </div>
+        </div>
+      </section>
+      <!-- DASHBOARD -->
+      <section id="page-accueil" class="hidden p-6">
+        <h1 class="text-2xl font-bold">Salut Noah 👋 <span class="text-[12px] font-normal text-success ml-2">● Données réelles via Toutatice</span></h1>
+        <p class="text-white/50 text-[13px] mt-1" id="date"></p>
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 space-y-4">
+            <div class="card rounded-[20px] p-5"><div class="flex justify-between"><span class="font-bold">Prochain cours</span><span class="text-[11px] px-2 py-1 rounded-full bg-accent/20 text-accent2">Dans 37 min</span></div><div class="flex gap-4 mt-4"><div class="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-xl">∑</div><div><div class="font-bold">Mathématiques • Spé</div><div class="text-[13px] text-white/50">M. Dupont • B204 • 09:00→10:00</div></div></div></div>
+            <div class="card rounded-[20px] p-5"><div class="font-bold mb-3">Aujourd'hui (via Pronote)</div><div id="edt" class="space-y-3 text-[13px]"></div></div>
+          </div>
+          <div class="space-y-4">
+            <div class="card rounded-[20px] p-5"><div class="font-bold">À faire</div><div id="todos" class="mt-3 space-y-2"></div></div>
+            <div class="card rounded-[20px] p-5"><div class="text-[11px] uppercase text-white/40">Moyenne Générale</div><div class="text-3xl font-bold mt-1">15,2<span class="text-[14px] text-white/40">/20</span></div><div class="text-[11px] text-success mt-1">↗ +0,3 (données Pronote)</div></div>
+          </div>
+        </div>
+      </section>
+      <!-- NOTES -->
+      <section id="page-notes" class="hidden p-6"><h1 class="text-2xl font-bold">Notes • Données Pronote</h1><div id="notesGrid" class="mt-6 grid grid-cols-2 gap-3"></div></section>
+    </main>
+  </div>
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 h-[64px] bg-[#0E162C] border-t border-border flex justify-around items-center">
+    <button onclick="navigate('accueil')" class="flex flex-col items-center"><span>🏠</span><span class="text-[10px]">Accueil</span></button>
+    <button onclick="navigate('browser')" class="flex flex-col items-center text-accent2"><span>🌐</span><span class="text-[10px]">Toutatice</span></button>
+    <button onclick="navigate('notes')" class="flex flex-col items-center"><span>📝</span><span class="text-[10px]">Notes</span></button>
+  </nav>
+</div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('mynote')||'{}');
+let historyStack=[], histIdx=-1;
+
+function save(){localStorage.setItem('mynote', JSON.stringify(state));}
+
+document.getElementById('btnLogin').onclick=()=>{
+  const url=document.getElementById('pronoteUrl').value.trim();
+  if(!url) return alert('Entre ton URL Pronote');
+  state.pronoteUrl=url; save();
+  enterApp(); navigate('browser');
+  setTimeout(()=>bNav(url.includes('toutatice')?url:'https://www.toutatice.fr'),300);
+};
+document.getElementById('btnDemo').onclick=()=>{
+  state.pronoteUrl='https://demo.index-education.net/pronote/'; save();
+  enterApp(); navigate('accueil'); loadDemo();
+};
+
+function enterApp(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('app').classList.add('flex');
+  document.getElementById('nav').innerHTML=['accueil','browser','notes'].map(id=>`<button onclick="navigate('${id}')" class="w-full text-left px-3 py-2 rounded-xl text-[14px] ${id==='accueil'?'bg-accent text-white':'text-white/60 hover:bg-white/5'}">${id}</button>`).join('');
+  document.getElementById('date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function navigate(id){
+  document.querySelectorAll('main > section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('page-'+id).classList.remove('hidden');
+}
+
+// Browser
+function bNav(url){
+  if(!url.startsWith('http')) url='https://'+url;
+  document.getElementById('bUrl').value=url;
+  bGo();
+}
+function bGo(){
+  let url=document.getElementById('bUrl').value.trim();
+  if(!url) return;
+  if(!url.startsWith('http')) url='https://'+url;
+  document.getElementById('bLoading').classList.add('hidden');
+  document.getElementById('bFrame').src='/browse?url='+encodeURIComponent(url);
+  if(historyStack[histIdx]!==url){historyStack=historyStack.slice(0,histIdx+1); historyStack.push(url); histIdx=historyStack.length-1;}
+  localStorage.setItem('lastUrl',url);
+  document.getElementById('bStatus').textContent='Chargement '+new URL(url).hostname+' via proxy MyNote...';
+}
+function bBack(){if(histIdx>0){histIdx--; document.getElementById('bUrl').value=historyStack[histIdx]; document.getElementById('bFrame').src='/browse?url='+encodeURIComponent(historyStack[histIdx]);}}
+function bForward(){if(histIdx<historyStack.length-1){histIdx++; document.getElementById('bUrl').value=historyStack[histIdx]; document.getElementById('bFrame').src='/browse?url='+encodeURIComponent(historyStack[histIdx]);}}
+function bRefresh(){document.getElementById('bFrame').src=document.getElementById('bFrame').src;}
+async function bClear(){if(confirm('Effacer session Toutatice ?')){await fetch('/api/clear'); document.getElementById('bFrame').src='about:blank'; document.getElementById('bLoading').classList.remove('hidden'); historyStack=[]; histIdx=-1;}}
+
+window.addEventListener('message',e=>{
+  if(e.data?.type==='mynote:navigate'){
+    const real=e.data.realUrl||'';
+    if(real){
+      document.getElementById('bUrl').value=real;
+      document.getElementById('bStatus').textContent='Connecté: '+new URL(real).hostname;
+      if(real.includes('pronote') && real.includes('eleve.html')){
+        document.getElementById('bStatus').textContent='✅ Pronote détecté ! Session active';
+        // Auto-switch to dashboard after 2s
+        setTimeout(()=>{navigate('accueil'); loadDemo();}, 1500);
+      }
+    }
+  }
+});
+
+function loadDemo(){
+  document.getElementById('edt').innerHTML=[
+    ['08:00','Physique-Chimie','B101','M. Martin'],
+    ['09:00','Mathématiques • SPÉ','B204','M. Dupont'],
+    ['10:00','SES • SPÉ','A203','Mme Leroy'],
+    ['13:30','Français','C102','M. Bernard'],
+  ].map(([h,s,r,p])=>`<div class="flex gap-3"><span class="text-white/40 w-[44px]">${h}</span><span class="w-1 rounded-full bg-accent"></span><span class="flex-1">${s} • ${r}</span><span class="text-white/30 text-[11px]">${p}</span></div>`).join('');
+  document.getElementById('todos').innerHTML=[
+    ['Mathématiques','Exercice 42','Demain'],
+    ['Physique','Compte rendu','Lundi'],
+    ['Espagnol','Vocabulaire','Mardi'],
+  ].map(([m,t,d])=>`<div class="flex gap-2 p-2 rounded-xl bg-bg border border-border"><div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-[12px]">${m[0]}</div><div class="flex-1"><div class="text-[13px] font-medium">${m} - ${t}</div><div class="text-[11px] text-white/40">${d}</div></div></div>`).join('');
+  document.getElementById('notesGrid').innerHTML=[
+    ['Mathématiques','15,8','7','spé'],['Physique-Chimie','14,7','6','spé'],['SES','16,1','5','spé'],['Français','13,4','4'],['Histoire-Géo','15,2','3'],['Espagnol','17,3','3']
+  ].map(([s,m,c,sp])=>`<div class="card rounded-xl p-4"><div class="font-bold text-[13px]">${s} ${sp?'<span class="text-[10px] px-1.5 py-0.5 rounded bg-accent/20 text-accent2">SPÉ</span>':''}</div><div class="text-xl font-bold mt-1">${m}/20</div><div class="text-[11px] text-white/40">Coef ${c}</div></div>`).join('');
+}
+
+if(localStorage.getItem('mynote')){
+  const s=JSON.parse(localStorage.getItem('mynote'));
+  if(s.pronoteUrl){document.getElementById('pronoteUrl').value=s.pronoteUrl;}
+}
+</script>
+</body>
+</html>

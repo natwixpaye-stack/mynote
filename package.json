@@ -1,0 +1,21 @@
+{
+  "type": "module",
+  "name": "mynote",
+  "version": "1.0.0",
+  "description": "MyNote - Pronote a ta sauce avec Toutatice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pawnote": "^1.6.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
