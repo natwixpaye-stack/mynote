@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0B1224">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 tailwind.config = {
   darkMode: 'class',
@@ -109,14 +110,49 @@ tailwind.config = {
             </div>
 
             <div id="qrArea" class="hidden rounded-xl bg-[#0B1224] border border-border p-4">
-              <div class="font-semibold text-[13px] mb-2">📱 Méthode officielle Pronote (QR Code)</div>
-              <ol class="text-[12px] text-white/60 list-decimal list-inside space-y-1">
-                <li>Connecte-toi à Pronote via le lien ci-dessus</li>
-                <li>Dans Pronote : Infos perso > QR Code > Générer</li>
-                <li>Colle le contenu ici :</li>
-              </ol>
-              <textarea id="qrInput" placeholder="pronote://..." class="mt-3 w-full h-[80px] p-3 rounded-xl bg-[#151E35] border border-border text-[12px] font-mono"></textarea>
-              <button id="btnConnectQR" class="mt-3 w-full h-10 rounded-xl bg-white text-black font-semibold text-[13px]">Se connecter avec ce QR</button>
+              <div class="font-semibold text-[14px] mb-3 flex items-center gap-2">📱 Méthode QR Code - Guide</div>
+              
+              <div class="bg-[#151E35] rounded-xl p-3 mb-3">
+                <div class="font-bold text-[12px] text-accent2 mb-2">ÉTAPE 1 - Dans Pronote (nouvel onglet) :</div>
+                <ol class="text-[12px] text-white/70 list-decimal list-inside space-y-1.5">
+                  <li>Clique en haut à droite sur ton prénom → <b>Informations personnelles</b></li>
+                  <li>Onglet <b>Compte</b> → section <b>Appli mobile</b> ou <b>QR Code</b></li>
+                  <li>Clique <b>Générer un QR Code</b> ou <b>Activer</b></li>
+                  <li>Un QR Code s'affiche avec un <b>code PIN à 4 chiffres</b> en dessous (ex: 1234) → note-le !</li>
+                </ol>
+              </div>
+
+              <div class="bg-[#151E35] rounded-xl p-3 mb-3">
+                <div class="font-bold text-[12px] text-accent2 mb-2">ÉTAPE 2 - Copier le QR Code (3 méthodes) :</div>
+                <div class="space-y-2 text-[11px] text-white/60">
+                  <div><b class="text-white">Méthode A - Scan avec téléphone (le plus simple) :</b><br>
+                  Ouvre l'appareil photo de ton téléphone, scanne le QR Code sur ton PC → tu verras un lien <code>pronote://...</code> → copie ce lien et colle-le ci-dessous</div>
+                  <div><b class="text-white">Méthode B - Clic droit sur QR :</b><br>
+                  Clic droit sur le QR Code dans Pronote → "Copier l'adresse de l'image" ou "Inspecter" → cherche <code>pronote://</code> dans le code</div>
+                  <div><b class="text-white">Méthode C - Scanner caméra MyNote :</b><br>
+                  Clique sur "Scanner avec caméra" ci-dessous et vise le QR Code affiché dans Pronote</div>
+                </div>
+              </div>
+
+              <div class="flex gap-2 mb-3">
+                <button id="btnScanQR" class="flex-1 h-10 rounded-xl bg-accent text-white text-[12px] font-medium">📷 Scanner avec caméra</button>
+                <button id="btnPasteQR" class="flex-1 h-10 rounded-xl bg-white/10 border border-border text-[12px]">📋 Coller depuis presse-papier</button>
+              </div>
+
+              <div id="qrScanner" class="hidden mb-3 rounded-xl overflow-hidden bg-black">
+                <div id="qrReader" class="w-full h-[200px] bg-black flex items-center justify-center text-[12px] text-white/50">Caméra...</div>
+                <button onclick="document.getElementById('qrScanner').classList.add('hidden')" class="w-full h-8 bg-white/10 text-[11px]">Fermer scanner</button>
+              </div>
+
+              <textarea id="qrInput" placeholder="Colle ici le lien pronote://... ou le JSON du QR Code&#10;Exemple: pronote://?url=https://0350774L.index-education.net/pronote/&login=N.NOAH&jeton=ABC123..." class="w-full h-[100px] p-3 rounded-xl bg-[#151E35] border border-border text-[11px] font-mono placeholder:text-white/20"></textarea>
+              
+              <div class="mt-2 text-[11px] text-white/40">Le QR contient ton identifiant + un jeton chiffré. Il reste en local, jamais envoyé à un tiers sauf ton backend Render.</div>
+              
+              <button id="btnConnectQR" class="mt-3 w-full h-11 rounded-xl bg-white text-black font-semibold text-[13px]">✅ Se connecter avec ce QR Code</button>
+              
+              <div class="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200">
+                💡 Si tu n'arrives pas à copier le QR, tu peux aussi utiliser ton mot de passe Pronote direct : dans Pronote > Infos perso > Compte > tu as un identifiant et un mot de passe appli mobile. Utilise-les avec ton URL Pronote via l'API.
+              </div>
             </div>
 
             <div class="pt-2 flex gap-3">
@@ -485,6 +521,43 @@ document.getElementById('btnConnectQR').onclick=async()=>{
     alert('Erreur réseau: ' + e.message);
     document.getElementById('btnConnectQR').innerHTML = 'Se connecter avec ce QR';
     document.getElementById('btnConnectQR').disabled = false;
+  }
+};
+
+document.getElementById('btnScanQR').onclick=async()=>{
+  const scannerDiv = document.getElementById('qrScanner');
+  scannerDiv.classList.remove('hidden');
+  const reader = document.getElementById('qrReader');
+  reader.innerHTML = 'Demande accès caméra...';
+  
+  try {
+    const html5QrCode = new Html5Qrcode("qrReader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        document.getElementById('qrInput').value = decodedText;
+        html5QrCode.stop().then(()=>{ scannerDiv.classList.add('hidden'); });
+        // Auto-remplir
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-success text-white px-4 py-2 rounded-full text-[12px] font-bold z-50';
+        toast.textContent = '✅ QR Code scanné !';
+        document.body.appendChild(toast);
+        setTimeout(()=>toast.remove(), 2000);
+      },
+      (error) => {}
+    );
+  } catch(e){
+    reader.innerHTML = '❌ Caméra non dispo: ' + e.message + '<br><br>Utilise la méthode téléphone ou colle le texte manuellement.';
+  }
+};
+
+document.getElementById('btnPasteQR').onclick=async()=>{
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('qrInput').value = text;
+  } catch{
+    alert('Colle manuellement avec Ctrl+V dans la zone de texte');
   }
 };
 
