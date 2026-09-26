@@ -67,11 +67,58 @@ function storeCookies(jar, targetUrl, setCookieHeaders) {
 }
 
 // Injected script for MyNote extraction
-function getInjectScript(baseUrl) {
+function getInjectScript(baseUrl, autoReturn) {
+  const autoReturnScript = autoReturn ? `
+  // AUTO-RETURN MODE: Si on est sur Pronote eleve.html, on revient auto vers MyNote avec session
+  function checkAutoReturn(){
+    try {
+      const isPronoteEleve = BASE_URL.includes('pronote') && BASE_URL.includes('eleve.html');
+      const bodyText = document.body.innerText || '';
+      const isPronoteLoaded = bodyText.includes('Emploi du temps') || bodyText.includes('Notes') || document.querySelector('.EDT_Cours, .cours, [class*=\"emploi\"]');
+      
+      if(isPronoteEleve && (isPronoteLoaded || document.readyState==='complete')) {
+        // On est bien dans Pronote après login EduConnect
+        console.log('MyNote auto-return triggered');
+        
+        // Affiche un bandeau MyNote
+        const banner = document.createElement('div');
+        banner.innerHTML = '<div style="position:fixed;top:0;left:0;right:0;z-index:999999;background:#6C7CFF;color:white;padding:16px;text-align:center;font-family:Inter;font-weight:600">✅ Connecté via EduConnect ! Retour vers MyNote dans 2s...<br><span style="font-size:12px;opacity:0.8">Tes données vont s\\'afficher dans l\\'interface MyNote</span></div>';
+        document.body.prepend(banner.firstChild);
+        
+        // Capture quelques infos et retourne vers MyNote
+        setTimeout(()=>{
+          try {
+            // On redirige vers MyNote avec un flag de succès - le backend a déjà les cookies en mémoire
+            const returnUrl = location.origin.includes('mynote') ? '/' : 'https://mynote-k8am.onrender.com/';
+            // Si on est dans iframe proxy, on postMessage au parent, sinon on redirige direct
+            if(window.parent !== window) {
+              window.parent.postMessage({type:'mynote:auto-return', realUrl: BASE_URL}, '*');
+            } else {
+              // Redirection directe automatique
+              window.location.href = returnUrl + '?real=1&auto=1&fromPronote=1&realUrl=' + encodeURIComponent(BASE_URL);
+            }
+          } catch(e){
+            window.location.href = 'https://mynote-k8am.onrender.com/?real=1&auto=1';
+          }
+        }, 2000);
+        return true;
+      }
+    } catch(e){ console.log('autoReturn check error', e); }
+    return false;
+  }
+  
+  // Check auto-return plusieurs fois
+  setTimeout(checkAutoReturn, 1000);
+  setTimeout(checkAutoReturn, 3000);
+  setTimeout(checkAutoReturn, 5000);
+  window.addEventListener('load', ()=>setTimeout(checkAutoReturn, 1500));
+  ` : '';
+
   return `
 <script>
 (function(){
   const BASE_URL = '${baseUrl.replace(/'/g,"\\'")}';
+  const AUTO_RETURN = ${autoReturn ? 'true' : 'false'};
   
   // Keep navigation inside proxy
   document.addEventListener('click', function(e){
@@ -84,7 +131,8 @@ function getInjectScript(baseUrl) {
       if(abs.pathname.startsWith('/browse')) return;
       if(abs.protocol !== 'http:' && abs.protocol !== 'https:') return;
       e.preventDefault();
-      window.location.href = '/browse?url=' + encodeURIComponent(abs.toString());
+      const autoParam = AUTO_RETURN ? '&autoReturn=1' : '';
+      window.location.href = '/browse?url=' + encodeURIComponent(abs.toString()) + autoParam;
     } catch {}
   }, true);
   
@@ -95,79 +143,34 @@ function getInjectScript(baseUrl) {
       let abs = new URL(form.action, window.location.href);
       if(abs.pathname.startsWith('/browse')) return;
       if(abs.protocol !== 'http:' && abs.protocol !== 'https:') return;
-      form.action = '/browse?url=' + encodeURIComponent(abs.toString());
+      const autoParam = AUTO_RETURN ? (abs.toString().includes('?') ? '&autoReturn=1' : '?autoReturn=1') : '';
+      form.action = '/browse?url=' + encodeURIComponent(abs.toString() + autoParam);
     } catch {}
   }, true);
 
   // Notify parent
   try {
-    window.parent.postMessage({type:'mynote:navigate', url: window.location.href, realUrl: BASE_URL}, '*');
+    window.parent.postMessage({type:'mynote:navigate', url: window.location.href, realUrl: BASE_URL, autoReturn: AUTO_RETURN}, '*');
   } catch {}
 
-  // MyNote extractor - tries to find Pronote data in page
+  ${autoReturnScript}
+
+  // MyNote extractor
   function extractPronoteData(){
     try {
-      const data = { url: BASE_URL, timestamp: Date.now() };
-      
-      // Try to find Pronote global objects
-      if(window.pronote || window.PRONOTE || window.data) {
-        data.hasPronoteGlobal = true;
-      }
-      
-      // Try to extract visible timetable, grades, etc. from DOM
       const bodyText = document.body.innerText || '';
-      
-      // Look for common Pronote selectors
-      const timetable = [];
-      document.querySelectorAll('[class*=\"cours\"], [class*=\"edt\"], .EDT_Cours, .cours').forEach(el=>{
-        const txt = el.innerText?.trim();
-        if(txt && txt.length>3 && txt.length<200) timetable.push(txt);
-      });
-      
-      // Try to get localStorage/sessionStorage tokens
-      try {
-        const ls = {};
-        for(let i=0;i<localStorage.length;i++){
-          const k=localStorage.key(i);
-          if(k && (k.toLowerCase().includes('pronote') || k.toLowerCase().includes('appli'))) {
-            ls[k]=localStorage.getItem(k)?.substring(0,200);
-          }
-        }
-        data.localStorage = ls;
-      } catch {}
-      
-      // Check if we're on Pronote eleve page
       const isPronote = BASE_URL.includes('pronote') && (BASE_URL.includes('eleve.html') || bodyText.includes('PRONOTE'));
-      data.isPronote = isPronote;
-      
       if(isPronote) {
-        // Try to find Start() data which contains session info
-        const html = document.documentElement.innerHTML;
-        const startMatch = html.match(/Start\\(\\s*\\{[\\s\\S]*?\\}\\s*\\)/);
-        if(startMatch) {
-          data.hasStartData = true;
-          data.startDataSnippet = startMatch[0].substring(0,500);
-        }
-        
-        // Notify parent that we're on Pronote
-        window.parent.postMessage({type:'mynote:pronote-detected', realUrl: BASE_URL, bodyPreview: bodyText.substring(0,1000)}, '*');
+        window.parent.postMessage({type:'mynote:pronote-detected', realUrl: BASE_URL}, '*');
       }
-      
-      // Store for later extraction
-      window.__MYNOTE_DATA__ = data;
-      
-    } catch(e){
-      console.log('MyNote extract error', e);
-    }
+    } catch(e){}
   }
   
-  // Run extraction after load
   if(document.readyState === 'complete') extractPronoteData();
   else window.addEventListener('load', extractPronoteData);
   setTimeout(extractPronoteData, 2000);
-  setTimeout(extractPronoteData, 5000);
 
-  // Hook XHR to capture Pronote API responses
+  // Hook XHR
   (function(){
     const origOpen = XMLHttpRequest.prototype.open;
     const origSend = XMLHttpRequest.prototype.send;
@@ -181,12 +184,10 @@ function getInjectScript(baseUrl) {
         try {
           if(this._mynote_url && this._mynote_url.includes('pronote') && this.responseText) {
             const preview = this.responseText.substring(0,2000);
-            // Try to detect if it's timetable, grades, etc.
             if(preview.includes('ListeCours') || preview.includes('Moyenne') || preview.includes('TAF') || preview.includes('Notes')) {
               window.parent.postMessage({
                 type:'mynote:api-captured',
                 url: this._mynote_url,
-                method: this._mynote_method,
                 preview: preview.substring(0,3000),
                 realBaseUrl: BASE_URL
               }, '*');
@@ -202,13 +203,13 @@ function getInjectScript(baseUrl) {
 `;
 }
 
-function rewriteHtml(html, baseUrl) {
+function rewriteHtml(html, baseUrl, autoReturn) {
   try {
     const $ = cheerio.load(html, { decodeEntities: false });
     $('meta[http-equiv="Content-Security-Policy"]').remove();
     $('meta[http-equiv="X-Frame-Options"]').remove();
     $('meta[http-equiv="content-security-policy"]').remove();
-    $('head').append(getInjectScript(baseUrl));
+    $('head').append(getInjectScript(baseUrl, autoReturn));
 
     const attrs = [
       { sel: 'a[href]', attr: 'href' },
@@ -255,6 +256,7 @@ function rewriteHtml(html, baseUrl) {
 // Proxy endpoint
 app.all('/browse', async (req, res) => {
   const targetUrl = req.query.url || req.body?.url;
+  const autoReturn = req.query.autoReturn === '1' || req.body?.autoReturn === '1';
   if (!targetUrl) return res.status(400).send('URL manquante');
   let parsedTarget;
   try { parsedTarget = new URL(targetUrl); } catch { return res.status(400).send('URL invalide'); }
@@ -306,7 +308,7 @@ app.all('/browse', async (req, res) => {
     const contentType = upstreamRes.headers.get('content-type') || '';
     if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
       let html = await upstreamRes.text();
-      html = rewriteHtml(html, targetUrl);
+      html = rewriteHtml(html, targetUrl, autoReturn);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('X-Frame-Options', 'ALLOWALL');
       res.setHeader('Content-Security-Policy', "frame-ancestors *");
@@ -430,7 +432,9 @@ app.get('/auth/start', (req, res) => {
     sid: req.cookies.mynote_sid
   });
 
+  // NOUVEAU: Retour automatique via proxy avec autoReturn=1
   const toutaticeLogin = `https://www.toutatice.fr/cas/login?service=${encodeURIComponent(pronoteUrl)}`;
+  const proxiedWithAutoReturn = `/browse?url=${encodeURIComponent(toutaticeLogin)}&autoReturn=1&state=${state}`;
   
   res.send(`
     <!DOCTYPE html>
@@ -440,29 +444,24 @@ app.get('/auth/start', (req, res) => {
     <style>body{font-family:Inter,sans-serif;background:#0B1224;color:white;padding:40px;max-width:600px;margin:auto}
     .card{background:#151E35;border:1px solid #233154;border-radius:20px;padding:24px;margin:20px 0}
     .btn{display:block;width:100%;height:52px;background:#6C7CFF;color:white;border-radius:12px;text-align:center;line-height:52px;font-weight:600;text-decoration:none;margin:12px 0}
-    code{background:#0B1224;padding:2px 6px;border-radius:6px;font-size:12px}
     </style></head>
     <body>
       <h1>🔗 MyNote → Toutatice → EduConnect</h1>
+      <div class="card" style="border-color:#2ECC71;background:rgba(46,204,113,0.1)">
+        <b>✅ Retour automatique activé !</b><br><br>
+        MyNote va t'envoyer vers Toutatice → EduConnect, et te ramener <b>automatiquement</b> avec ta session, sans bookmarklet.
+      </div>
       <div class="card">
-        <b>Flux par lien officiel (sans iframe) :</b><br><br>
-        1. Tu vas être redirigé vers <b>Toutatice</b><br>
-        2. Toutatice te redirige vers <b>EduConnect</b><br>
-        3. Tu te connectes<br>
+        <b>Parcours :</b><br>
+        1. MyNote (lien) → Toutatice<br>
+        2. Toutatice → EduConnect<br>
+        3. Login<br>
         4. Retour Toutatice → Pronote<br>
-        5. <b>Dans Pronote, clique sur le bookmarklet "Retour vers MyNote"</b><br><br>
-        <b>Pourquoi pas de retour direct ?</b><br>
-        Toutatice (CAS) n'autorise que Pronote comme service, il refuse <code>${finalRedirect}</code>. C'est bloqué côté académie. Le bookmarklet est la seule méthode sans iframe.
+        5. <b style="color:#2ECC71">Pronote détecté → Retour auto vers MyNote</b>
       </div>
-      <a class="btn" href="${toutaticeLogin}">Continuer vers Toutatice → EduConnect</a>
-      <div class="card">
-        <b>📌 Bookmarklet à glisser dans tes favoris AVANT :</b><br><br>
-        <a href="javascript:(function(){try{const d={url:location.href};const t=btoa(unescape(encodeURIComponent(JSON.stringify(d))));location.href='${finalRedirect}?state=${state}&realUrl='+encodeURIComponent(location.href);}catch(e){alert('Erreur: '+e.message)}})();" 
-           style="display:inline-block;padding:10px 16px;background:#6C7CFF;color:white;border-radius:10px;text-decoration:none;font-weight:bold">↩️ Retour vers MyNote</a><br><br>
-        <span style="font-size:12px;color:#888">Glisse ce bouton dans ta barre de favoris. Une fois dans Pronote, clique dessus.</span>
-      </div>
-      <p style="font-size:11px;color:#666">State: ${state}</p>
+      <a class="btn" href="${proxiedWithAutoReturn}">🔗 Continuer vers Toutatice → EduConnect (retour auto)</a>
       <p><a href="/" style="color:#6C7CFF">← Retour MyNote</a></p>
+      <script>setTimeout(()=>{ window.location.href = "${proxiedWithAutoReturn}"; }, 800);</script>
     </body>
     </html>
   `);

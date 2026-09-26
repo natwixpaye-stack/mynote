@@ -282,8 +282,8 @@ tailwind.config = {
         <h1 class="text-[24px] font-bold mb-5">Paramètres</h1>
         <div class="space-y-4">
           <div class="card rounded-[20px] p-5"><div class="text-[11px] font-bold uppercase text-white/40 mb-3">Apparence</div><div class="space-y-3"><div class="flex justify-between"><span class="text-[14px]">Thème</span><span class="text-[13px] text-white/50">Sombre</span></div><div class="flex justify-between"><span class="text-[14px]">Couleur principale</span><div class="w-5 h-5 rounded-full bg-accent"></div></div></div></div>
-          <div class="card rounded-[20px] p-5"><div class="text-[11px] font-bold uppercase text-white/40 mb-3">Compte</div><div class="text-[13px]"><div>Connexion : <span class="text-success">Via EduConnect (lien officiel)</span></div><div class="mt-1">Flux : MyNote → Toutatice → EduConnect → <span class="text-accent2">Bookmarklet retour MyNote</span></div></div></div>
-          <div class="card rounded-[20px] p-5 border-amber-500/20"><div class="font-bold text-[14px] mb-2">Pourquoi pas de retour direct ?</div><div class="text-[13px] text-white/60">Toutatice (CAS) n'autorise que 2 services whitelistés : son portail et Pronote. Il refuse mynote.k8am.onrender.com. C'est bloqué côté académie. Le bookmarklet est la seule méthode sans iframe qui respecte leur sécurité.</div></div>
+          <div class="card rounded-[20px] p-5"><div class="text-[11px] font-bold uppercase text-white/40 mb-3">Compte</div><div class="text-[13px]"><div>Connexion : <span class="text-success">Via EduConnect (lien officiel)</span></div><div class="mt-1">Flux : MyNote → Toutatice → EduConnect → <span class="text-success">Retour auto vers MyNote ✅</span></div></div></div>
+          <div class="card rounded-[20px] p-5 border-amber-500/20"><div class="font-bold text-[14px] mb-2">Pourquoi pas de retour direct ?</div><div class="text-[13px] text-white/60">Toutatice (CAS) n'autorise que Pronote comme service. MyNote contourne en passant par /browse?url=...&autoReturn=1 : le proxy détecte Pronote eleve.html et te ramène automatiquement sur MyNote avec ta session. Plus besoin de bookmarklet.</div></div>
         </div>
       </section>
 
@@ -404,22 +404,16 @@ function initNav(){
   document.getElementById('desktopNav').innerHTML = items.map(i=>`<button data-nav="${i.id}" onclick="navigate('${i.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-[14px] flex items-center gap-3 ${i.id==='accueil'?'bg-accent text-white':'text-white/60 hover:bg-white/5'}"><span>${i.icon}</span>${i.label}</button>`).join('');
 }
 
-// NOUVEAU FLUX LIEN EDUCONNECT
+// NOUVEAU FLUX LIEN EDUCONNECT AVEC RETOUR AUTO
 document.getElementById('btnLinkEduconnect').onclick=()=>{
   const url = document.getElementById('pronoteUrl').value.trim();
   if(!url) return alert('Entre ton URL Pronote');
   state.pronoteUrl=url; save();
-  // Redirige vers notre backend qui tente le flux CAS, puis vers Toutatice/EduConnect
-  // Comme CAS refuse mynote comme service, on redirige directement vers Toutatice avec service=Pronote, et on explique le bookmarklet
   const redirectUri = encodeURIComponent(location.origin + '/auth/callback');
   const authUrl = `/auth/start?pronoteUrl=${encodeURIComponent(url)}&redirect_uri=${redirectUri}`;
-  // Pour l'instant, on ouvre Toutatice directement (lien officiel)
-  // Le vrai flux serait: MyNote -> /auth/start -> Toutatice CAS -> EduConnect -> Pronote -> bookmarklet -> MyNote
-  if(confirm('MyNote va t\'envoyer vers Toutatice → EduConnect (lien officiel).\\n\\nAprès t\'être connecté, tu seras sur Pronote.\\nUtilise ensuite le bookmarklet \"Retour vers MyNote\" pour revenir avec tes données.\\n\\nContinuer ?')){
-    window.location.href = `https://www.toutatice.fr/portail/auth/pagemarker/1/MonEspace`;
-    // On stocke qu'on est en cours de login par lien
-    localStorage.setItem('mynote_pending_auth', JSON.stringify({pronoteUrl:url, at:Date.now()}));
-  }
+  // Flux auto: MyNote -> /auth/start -> /browse?url=Toutatice&autoReturn=1 -> EduConnect -> Pronote -> auto retour MyNote
+  window.location.href = authUrl;
+  localStorage.setItem('mynote_pending_auth', JSON.stringify({pronoteUrl:url, at:Date.now(), autoReturn:true}));
 };
 
 document.getElementById('btnBookmarklet').onclick=()=>{
