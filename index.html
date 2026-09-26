@@ -3,50 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyNote - Connexion directe (comme Papillon)</title>
+<title>MyNote - Direct</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{bg:'#0B1224',card:'#151E35',border:'#233154',accent:'#6C7CFF',success:'#2ECC71'}}}}</script>
-<style>body{background:#0B1224;font-family:Inter,sans-serif}.card{background:#151E35;border:1px solid #233154}</style>
+<style>body{background:#0B1224;font-family:Inter,sans-serif;color:white}.card{background:#151E35;border:1px solid #233154}</style>
 </head>
-<body class="bg-bg text-white min-h-screen p-4 flex items-center justify-center">
+<body class="bg-[#0B1224] min-h-screen p-4 flex items-center justify-center">
 
 <div id="login" class="w-full max-w-[520px]">
   <div class="text-center mb-6">
-    <div class="w-12 h-12 rounded-xl bg-accent flex items-center justify-center font-bold text-xl mx-auto mb-3">M</div>
-    <h1 class="text-[28px] font-[800]">MyNote - Direct comme Papillon</h1>
-    <p class="text-white/60 text-[13px] mt-1">Connexion depuis TON navigateur (IP française) - pas depuis Render US qui est bloqué</p>
+    <div class="w-12 h-12 rounded-xl bg-[#6C7CFF] flex items-center justify-center font-bold text-xl mx-auto mb-3">M</div>
+    <h1 class="text-[24px] font-[800]">MyNote - Connexion directe</h1>
+    <p class="text-white/60 text-[12px] mt-1">Si les boutons ne marchent pas, recharge la page (Ctrl+F5)</p>
   </div>
 
   <div class="card rounded-[20px] p-6">
-    <div class="text-[12px] font-bold text-white/50 uppercase mb-2">URL Pronote</div>
-    <input id="url" value="https://0352686e.index-education.net/pronote/" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-border text-[13px] mb-4">
+    <label class="text-[11px] font-bold text-white/50 uppercase">URL Pronote</label>
+    <input id="url" value="https://0352686e.index-education.net/pronote/" class="w-full h-[44px] px-3 rounded-xl bg-[#0B1224] border border-[#233154] text-[13px] mt-1 mb-3">
 
-    <div class="flex gap-2 mb-4">
-      <button id="btnTest" class="flex-1 h-[40px] rounded-xl bg-white/10 text-[12px]">Tester URL (depuis ton IP)</button>
-      <button id="btnEnt" class="flex-1 h-[44px] rounded-xl bg-accent font-bold text-[13px]">🔐 Connexion ENT</button>
-    </div>
+    <button id="btnTest" type="button" onclick="testUrl()" class="w-full h-[44px] rounded-xl bg-white/10 hover:bg-white/20 text-[13px] font-semibold mb-2">🔍 Tester URL (depuis ton IP)</button>
+    <button id="btnEnt" type="button" onclick="connectEnt()" class="w-full h-[48px] rounded-xl bg-[#6C7CFF] hover:bg-[#8B9AFF] text-white font-bold text-[14px]">🔐 Connexion ENT (comme Papillon)</button>
 
-    <div id="status" class="text-[12px] p-3 rounded-xl bg-white/5 border border-border hidden"></div>
+    <div id="status" class="hidden mt-3 text-[12px] p-3 rounded-xl bg-white/5 border border-[#233154]"></div>
 
-    <div class="mt-4 p-3 rounded-xl bg-success/10 border border-success/20 text-[11px] leading-[1.4]">
-      <b>✅ Pourquoi ça va marcher maintenant :</b><br>
-      Avant, MyNote utilisait le serveur Render (IP US) qui est bloqué par Toutatice → "ENT Erreur technique".<br>
-      Maintenant, tout se passe depuis TON navigateur (IP française) comme Papillon sur téléphone. Plus de blocage.
+    <div class="mt-4 p-3 rounded-xl bg-[#2ECC71]/10 border border-[#2ECC71]/20 text-[11px]">
+      <b>✅ Fix boutons:</b> Si tu ne peux pas cliquer, fais <b>Ctrl+F5</b> pour recharger sans cache. Le site utilise du JS qui peut être bloqué par une ancienne version en cache.
     </div>
 
     <div class="mt-4">
-      <div class="text-[11px] font-bold uppercase text-white/40 mb-2">Méthode QR Code (si ENT bloque encore)</div>
-      <textarea id="qr" placeholder="Colle le QR Code JSON ou pronote://..." class="w-full h-[60px] p-2 rounded-xl bg-[#0B1224] border border-border text-[11px] font-mono"></textarea>
-      <input id="pin" placeholder="PIN 4 chiffres" class="w-full mt-2 h-[40px] px-3 rounded-xl bg-[#0B1224] border border-border text-[13px]">
-      <button id="btnQr" class="w-full mt-2 h-[40px] rounded-xl bg-white/10 text-[12px]">Connexion QR (depuis ton navigateur)</button>
+      <div class="text-[11px] font-bold uppercase text-white/40 mb-2">QR Code</div>
+      <textarea id="qr" placeholder="Colle QR JSON" class="w-full h-[50px] p-2 rounded-xl bg-[#0B1224] border border-[#233154] text-[11px] font-mono"></textarea>
+      <input id="pin" placeholder="PIN" class="w-full mt-2 h-[36px] px-3 rounded-xl bg-[#0B1224] border border-[#233154] text-[12px]">
+      <button type="button" onclick="connectQr()" class="w-full mt-2 h-[36px] rounded-xl bg-white/10 text-[12px]">Connexion QR</button>
+      <div id="qrStatus" class="hidden mt-2 text-[11px] p-2 rounded-xl"></div>
     </div>
   </div>
 </div>
 
 <div id="app" class="hidden w-full max-w-[900px]">
   <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span><span class="px-2 py-1 rounded-full bg-success/20 text-success text-[10px]">DIRECT - IP FR</span></div>
+    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#6C7CFF] flex items-center justify-center font-bold">M</div><span class="font-bold">MyNote</span></div>
     <button onclick="localStorage.clear();location.reload()" class="px-4 py-2 rounded-xl bg-white/10 text-[12px]">Déco</button>
   </div>
   <div id="user" class="card rounded-[16px] p-4 mb-4"></div>
@@ -55,111 +51,84 @@
     <div class="card rounded-[16px] p-4"><h3 class="font-bold mb-2">📊 Notes</h3><div id="notes" class="text-[12px]"></div></div>
     <div class="card rounded-[16px] p-4"><h3 class="font-bold mb-2">📚 Devoirs</h3><div id="devoirs" class="text-[12px]"></div></div>
   </div>
-  <pre id="raw" class="mt-4 p-3 rounded-xl bg-black/50 text-[10px] max-h-[300px] overflow-auto"></pre>
 </div>
 
-<script type="module">
-import * as pawnote from 'https://cdn.jsdelivr.net/npm/pawnote@1.6.2/+esm';
-
-const $=id=>document.getElementById(id);
-function status(msg, type='info'){
-  const el=$('status'); el.classList.remove('hidden'); el.innerHTML=msg;
-  el.className='text-[12px] p-3 rounded-xl mt-3 '+(type==='error'?'bg-red-500/20 text-red-300 border border-red-500/30':type==='success'?'bg-success/20 text-success border border-success/20':'bg-white/5 border border-border');
+<script>
+// Simple non-module JS - buttons will work even if pawnote fails
+function showStatus(msg, type){
+  const el=document.getElementById('status');
+  el.classList.remove('hidden');
+  el.innerHTML=msg;
+  el.className='mt-3 text-[12px] p-3 rounded-xl '+(type==='error'?'bg-red-500/20 text-red-300':type==='success'?'bg-[#2ECC71]/20 text-[#2ECC71]':'bg-white/5 border border-[#233154]');
+}
+function showQrStatus(msg,type){
+  const el=document.getElementById('qrStatus');
+  el.classList.remove('hidden');
+  el.innerHTML=msg;
+  el.className='mt-2 text-[11px] p-2 rounded-xl '+(type==='error'?'bg-red-500/20 text-red-300':'bg-[#2ECC71]/20 text-[#2ECC71]');
 }
 
-$('btnTest').onclick=async()=>{
-  const url=$('url').value.trim();
-  status('Test depuis ton navigateur (IP française)...');
+async function testUrl(){
+  const url=document.getElementById('url').value.trim();
+  showStatus('Test depuis ton navigateur...<br>URL: '+url);
   try{
+    // Try to fetch instance via our server proxy first (to avoid CORS), then direct
+    const res=await fetch('/api/test-pronote?url='+encodeURIComponent(url));
+    const j=await res.json();
+    if(j.success){
+      showStatus('✅ '+j.instance.name+'<br>Version: '+(j.instance.version||'?')+'<br>CAS: '+(j.instance.hasCAS?'Oui':'Non')+'<br><br>✅ Serveur OK, maintenant test depuis ton IP (méthode directe)...<br><button onclick="testDirect()" class="mt-2 px-3 py-1 rounded bg-[#6C7CFF] text-white text-[11px]">Tester depuis mon IP (comme Papillon)</button>', 'success');
+    } else {
+      showStatus('❌ Serveur: '+j.error+'<br><br>Essaie quand même connexion ENT directe', 'error');
+    }
+  }catch(e){
+    showStatus('❌ Erreur: '+e.message, 'error');
+  }
+}
+
+async function testDirect(){
+  const url=document.getElementById('url').value.trim();
+  showStatus('Test direct depuis ton navigateur (IP FR) via pawnote CDN...');
+  try{
+    const pawnote=await import('https://cdn.jsdelivr.net/npm/pawnote@1.6.2/+esm');
     const clean=pawnote.cleanURL(url);
-    status('cleanURL: '+clean+'<br>Fetching instance...');
+    showStatus('cleanURL: '+clean+'<br>Fetching instance depuis ton IP...');
     const instance=await pawnote.instance(clean);
-    status(`✅ ${instance.name}<br>Version: ${instance.version?.join('.')}<br>CAS: ${instance.casURL?'Oui - '+instance.casURL:'Non'}<br><br>✅ Ton IP n'est PAS bloquée ! Tu peux te connecter via ENT.`, 'success');
+    showStatus('✅ Direct OK depuis ton IP!<br>'+instance.name+'<br>CAS: '+(instance.casURL?'Oui':'Non')+'<br><br>Tu peux cliquer Connexion ENT', 'success');
   }catch(e){
-    status('❌ '+e.name+': '+e.message+'<br><br>Si PageUnavailableError, ton IP est bloquée aussi (rare). Essaie en 4G ou autre réseau.', 'error');
+    showStatus('❌ Direct: '+e.name+' '+e.message+'<br><br>Si PageUnavailableError, même ton IP est bloquée (essaie en 4G). Sinon, essaie QR Code.', 'error');
   }
-};
+}
 
-$('btnEnt').onclick=async()=>{
-  const url=$('url').value.trim();
-  status('🔐 Ouverture connexion ENT comme Papillon...<br><br>1. On va ouvrir Pronote dans un nouvel onglet<br>2. Tu te connectes via EduConnect<br>3. On récupère le token automatiquement', 'info');
+async function connectEnt(){
+  const url=document.getElementById('url').value.trim();
+  showStatus('🔐 Méthode Papillon directe depuis ton navigateur...<br><br>Ouverture de Pronote dans un nouvel onglet. Connecte-toi via EduConnect là-bas, puis on extrait le token.', 'info');
   
-  const deviceUUID='mynote-'+Math.random().toString(36).slice(2);
-  const clean=pawnote.cleanURL(url);
-  
-  // Open popup to handle ENT like Papillon does
-  // Papillon flow: InfoMobileApp.json -> set cookies -> mobile.eleve.html -> user login -> loginState
-  const infoUrl=clean+'/InfoMobileApp.json?id=0D264427-EEFC-4810-A9E9-346942A862A4';
-  
-  try{
-    status('Fetching InfoMobileApp.json depuis ton navigateur...');
-    const res=await fetch(infoUrl);
-    const json=await res.json();
-    status('InfoMobileApp OK: '+json.nomEtab+'<br>CAS: '+(json.CAS?'Oui':'Non')+'<br><br>Ouverture Pronote...', 'info');
-    
-    const hasCAS=json.CAS && json.CAS.jetonCAS;
-    let mobileUrl=clean+'/mobile.eleve.html?fd=1';
-    
-    // Open new tab to mobile.eleve.html - user will login via ENT there
-    const win=window.open(mobileUrl, '_blank');
-    if(!win){ status('❌ Popup bloqué! Autorise les popups puis réessaie.', 'error'); return; }
-    
-    status(`✅ Pronote ouvert dans nouvel onglet<br><br>
-      <b>Dans le nouvel onglet :</b><br>
-      1. Connecte-toi via EduConnect (Toutatice)<br>
-      2. Une fois dans Pronote, fais <b>F12 → Console</b><br>
-      3. Colle ce code et Entrée :<br>
-      <code style="display:block;background:#000;padding:8px;border-radius:6px;margin:8px 0;font-size:10px;word-break:break-all">let s=window.loginState; if(!s) alert('Pas encore connecté'); else { localStorage.setItem('mynote_token', JSON.stringify({login:s.login, token:s.mdp, url:'${clean}', uuid:'${deviceUUID}'})); fetch('https://mynote-k8am.onrender.com/api/ent-callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'${clean}', login:s.login, token:s.mdp, deviceUUID:'${deviceUUID}'})}).then(r=>r.json()).then(j=>{ if(j.success){ localStorage.setItem('mynote_real', JSON.stringify(j)); alert('✅ '+j.user.name+' - Retourne sur MyNote'); if(window.opener) window.opener.postMessage({type:'mynote:real', data:j}, '*'); } }); }</code>
-      <button id="btnCopyCode" class="mt-2 px-3 py-1 rounded bg-white text-black text-[11px] font-bold">📋 Copier code console</button>
-      <br><br>
-      <button id="btnCheckToken" class="mt-2 w-full h-[40px] rounded-xl bg-success text-black font-bold">📥 J'ai fait F12 → Console → Collé → Entrée - Charger</button>
-    `, 'info');
-    
-    document.getElementById('btnCopyCode')?.addEventListener('click', ()=>{
-      const code=`let s=window.loginState; if(!s) alert('Pas encore connecté'); else { localStorage.setItem('mynote_token', JSON.stringify({login:s.login, token:s.mdp, url:'${clean}', uuid:'${deviceUUID}'})); fetch('https://mynote-k8am.onrender.com/api/ent-callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'${clean}', login:s.login, token:s.mdp, deviceUUID:'${deviceUUID}'})}).then(r=>r.json()).then(j=>{ if(j.success){ localStorage.setItem('mynote_real', JSON.stringify(j)); alert('✅ '+j.user.name+' - Retourne sur MyNote'); if(window.opener) window.opener.postMessage({type:'mynote:real', data:j}, '*'); } }); }`;
-      navigator.clipboard.writeText(code).then(()=>alert('Code copié! Va dans l\'onglet Pronote → F12 → Console → Ctrl+V → Entrée'));
-    });
-    
-    document.getElementById('btnCheckToken')?.addEventListener('click', async()=>{
-      // Try to get from localStorage (if user ran code, it saved to pronote domain localStorage, not mynote domain, so we can't read directly)
-      // Instead, ask user to paste token
-      const pasted=prompt('Colle ici ce que tu as dans localStorage mynote_token (F12 → Console → tape localStorage.getItem(\\'mynote_token\\') → copie le résultat)');
-      if(pasted){
-        try{
-          const data=JSON.parse(pasted);
-          const res=await fetch('/api/ent-callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:data.url, login:data.login, token:data.token, deviceUUID:data.uuid})});
-          const j=await res.json();
-          if(j.success){ localStorage.setItem('mynote_real', JSON.stringify(j)); enterApp(j); }
-          else { status('Erreur: '+j.error, 'error'); }
-        }catch(e){ status('Erreur parse: '+e.message, 'error'); }
-      } else {
-        // Try to load from our own localStorage if callback already saved
-        const saved=localStorage.getItem('mynote_real');
-        if(saved){ try{ enterApp(JSON.parse(saved)); }catch{} }
-        else { status('Pas de données. Assure-toi d\\'avoir bien fait F12 → Console → Ctrl+V → Entrée dans l\\'onglet Pronote et que la bulle verte est apparue.', 'error'); }
-      }
-    });
-    
-    // Listen for postMessage from pronote tab
-    window.addEventListener('message', (e)=>{
-      if(e.data && e.data.type==='mynote:real' && e.data.data.success){
-        status('✅ Données reçues: '+e.data.data.user.name, 'success');
-        localStorage.setItem('mynote_real', JSON.stringify(e.data.data));
-        enterApp(e.data.data);
-      }
-    });
-    
-  }catch(e){
-    status('❌ Erreur: '+e.name+' '+e.message, 'error');
+  // Open ENT login page that does auto-extract without bookmark bar
+  const entUrl='/ent/login?url='+encodeURIComponent(url);
+  const win=window.open(entUrl, '_blank');
+  if(!win){
+    showStatus('❌ Popup bloqué! Autorise les popups pour ce site puis réessaie. Ou ouvre manuellement: <a href="'+entUrl+'" target="_blank" class="underline text-[#6C7CFF]">'+entUrl+'</a>', 'error');
+    return;
   }
-};
+  
+  showStatus('✅ Onglet ENT ouvert<br><br>1. Dans le nouvel onglet, clique "📋 Copier le code"<br>2. Va sur toutatice.fr → Pronote (EDT visible)<br>3. F12 → Console → Ctrl+V → Entrée<br>4. Bulle verte → reviens ici → clique "Charger"', 'success');
+  
+  window.addEventListener('message', (e)=>{
+    if(e.data && e.data.type==='mynote:real-data' && e.data.data.success){
+      showStatus('✅ Données reçues: '+e.data.data.user.name, 'success');
+      localStorage.setItem('mynote_real', JSON.stringify(e.data.data));
+      enterApp(e.data.data);
+    }
+  });
+}
 
-$('btnQr').onclick=async()=>{
-  const qrData=$('qr').value.trim();
-  const pin=$('pin').value.trim();
-  if(!qrData){ status('Colle QR d\'abord', 'error'); return; }
-  status('Connexion QR depuis ton navigateur (IP FR)...');
+async function connectQr(){
+  const qrData=document.getElementById('qr').value.trim();
+  const pin=document.getElementById('pin').value.trim();
+  if(!qrData){ showQrStatus('Colle QR', 'error'); return; }
+  showQrStatus('Connexion QR depuis ton navigateur...', 'info');
   try{
+    const pawnote=await import('https://cdn.jsdelivr.net/npm/pawnote@1.6.2/+esm');
     let qrObj=null;
     if(qrData.startsWith('pronote://')){
       const u=new URL(qrData);
@@ -173,48 +142,53 @@ $('btnQr').onclick=async()=>{
       }
     }
     if(!qrObj?.url) throw new Error('QR invalide');
-    
     const session=pawnote.createSessionHandle();
     const deviceUUID='mynote-'+Math.random().toString(36).slice(2);
-    status('loginQrCode depuis navigateur... PIN='+pin);
     await pawnote.loginQrCode(session, {qr:{url:qrObj.url, login:qrObj.login, jeton:qrObj.jeton}, pin, deviceUUID, navigatorIdentifier:'MyNote'});
-    
     const [timetable, grades, homeworks]=await Promise.all([
       pawnote.timetableFromIntervals(session, new Date(), new Date(Date.now()+7*86400000)).catch(e=>({error:e.message,classes:[]})),
       pawnote.gradesOverview(session).catch(e=>({error:e.message})),
       pawnote.assignmentsFromIntervals(session, new Date(), new Date(Date.now()+14*86400000)).catch(e=>[])
     ]);
-    
     const data={success:true,user:{name:session.user?.name, class:session.user?.studentClass?.name},instance:{url:qrObj.url},timetable,grades,homeworks,method:'qr-direct'};
     localStorage.setItem('mynote_real', JSON.stringify(data));
-    status('✅ '+data.user.name+' - '+timetable.classes?.length+' cours', 'success');
+    showQrStatus('✅ '+data.user.name, 'success');
     enterApp(data);
   }catch(e){
-    status('❌ QR: '+e.name+' '+e.message+'<br><br>Si PageUnavailableError, ton IP est bloquée même en direct (rare). Essaie en 4G.', 'error');
+    showQrStatus('❌ '+e.name+' '+e.message, 'error');
   }
-};
+}
 
 function enterApp(data){
-  $('login').classList.add('hidden');
-  $('app').classList.remove('hidden');
-  $('user').innerHTML=`<div class="font-bold text-[18px]">${data.user?.name||'Élève'}</div><div class="text-[13px] text-white/60">${data.user?.class||''} • ${data.instance?.url||''} • ${data.method||''}</div>`;
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('user').innerHTML=`<div class="font-bold text-[16px]">${data.user?.name||'Élève'}</div><div class="text-[12px] text-white/60">${data.user?.class||''} • ${data.instance?.url||''}</div>`;
   const tt=data.timetable?.classes||[];
-  $('edt').innerHTML=tt.length?tt.slice(0,10).map(c=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-border mb-1"><b>${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</b> ${c.subject?.name||''} ${c.room?.name||''}</div>`).join(''):'Pas de cours';
+  document.getElementById('edt').innerHTML=tt.length?tt.slice(0,8).map(c=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1"><b>${c.startDate?new Date(c.startDate).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</b> ${c.subject?.name||''}</div>`).join(''):'Pas de cours';
   const gr=data.grades?.grades||[];
-  $('notes').innerHTML=gr.length?gr.slice(0,10).map(g=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-border mb-1">${g.subject?.name||''}: ${g.grade?.value||''}</div>`).join(''):'Pas de notes';
+  document.getElementById('notes').innerHTML=gr.length?gr.slice(0,8).map(g=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1">${g.subject?.name||''}: ${g.grade?.value||''}</div>`).join(''):'Pas de notes';
   const hw=data.homeworks||[];
-  $('devoirs').innerHTML=hw.length?hw.map(h=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-border mb-1">${h.subject?.name||''}: ${(h.description||'').substring(0,100)}</div>`).join(''):'Pas de devoirs';
-  $('raw').textContent=JSON.stringify(data,null,2).substring(0,5000);
+  document.getElementById('devoirs').innerHTML=hw.length?hw.map(h=>`<div class="p-2 rounded-lg bg-[#0B1224] border border-[#233154] mb-1">${h.subject?.name||''}: ${(h.description||'').substring(0,80)}</div>`).join(''):'Pas de devoirs';
 }
 
 const saved=localStorage.getItem('mynote_real');
 if(saved){ try{ enterApp(JSON.parse(saved)); }catch{} }
 
 window.addEventListener('message', (e)=>{
-  if(e.data && e.data.type==='mynote:real' && e.data.data.success){
+  if(e.data && e.data.type==='mynote:real-data' && e.data.data.success){
     localStorage.setItem('mynote_real', JSON.stringify(e.data.data));
     enterApp(e.data.data);
   }
+});
+
+// Test if JS works
+console.log('MyNote JS loaded');
+document.addEventListener('DOMContentLoaded', ()=>{
+  console.log('DOM loaded, buttons should work');
+  // Add visual feedback that buttons are clickable
+  document.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{ b.style.transform='scale(0.95)'; setTimeout(()=>b.style.transform='', 100); });
+  });
 });
 </script>
 </body>
